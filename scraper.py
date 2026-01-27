@@ -26,6 +26,16 @@ def is_valid(url):
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        #domain parsing here, 
+        #from urlparse documentation scheme://netloc/path;parameters?query#fragment.
+        #from slides scheme://domain:port/path?query_string#fragment_id
+        allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"} #waiting to hear back on ed
+        domain = parsed.hostname #returns the entire domain, does not include the /before path, this does however include www.
+        if not any(domain.endswith(d) for d in allowed_domains):
+            return False #its crude but gets it in around O(1), O(n) for larger string domains
+            #you could try to do something with amoritized with reversing the domain and doing prefix lookup but that
+            #would give you the same time complexity here
+
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
