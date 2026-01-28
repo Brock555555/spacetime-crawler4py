@@ -38,15 +38,16 @@ def is_valid(url):
             return False #its crude but gets it in around O(1) - O(n) for larger string domains
         #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
         #now for the prefix check, we have a valid domain suffix but the subdomain needs to be checked
-        if domain.startswith("www."):
-            domain = domain[:4] #remove www. if it exists - www. is legal
-        domain_parts = domain.split('.')
-        #all valid domains are of atleast length 3
-        domain_parts = domain_parts[:-3] #remove the last 3
-        #if len(domain_parts) != 0:
-            #check for valid subdomains
-            #tbd
-            #return False
+        return not re.match(
+            r"^(www\.){2,}" #block www.www.
+            + r"|^[a-z0-9]{8,}\."# random nonsense strings
+            + r"|^([a-z0-9-]+\.){5,}"# too many subdomains
+            + r"|^(mail|admin|ftp|test|dev|staging|beta|preview|sandbox|demo|qa|srv|node|host|lb)\." #junk, can be added to
+            + r"|^([a-z0-9-]+)\.\1\.\1\." # 3 repeated subdomains
+            + r"|^v\d+(\.|-)" #version number subdomain
+            + r"|^(\d+-){3}\d+\." #IP address subdomains
+            + r"|^\d+\.", domain #all numbers
+        )
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
