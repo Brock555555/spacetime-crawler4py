@@ -31,10 +31,22 @@ def is_valid(url):
         #from slides scheme://domain:port/path?query_string#fragment_id
         allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"} #waiting to hear back on ed
         domain = parsed.hostname #returns the entire domain, does not include the /before path, this does however include www.
-        if not any(domain.endswith(d) for d in allowed_domains):
-            return False #its crude but gets it in around O(1), O(n) for larger string domains
-            #you could try to do something with amoritized with reversing the domain and doing prefix lookup but that
-            #would give you the same time complexity here
+        #domain should already be lowercase
+        if not domain:
+            return False #if domain is None
+        if not any(domain == d or domain.endswith("." + d) for d in allowed_domains):
+            return False #its crude but gets it in around O(1) - O(n) for larger string domains
+        #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
+        #now for the prefix check, we have a valid domain suffix but the subdomain needs to be checked
+        if domain.startswith("www."):
+            domain = domain[:4] #remove www. if it exists - www. is legal
+        domain_parts = domain.split('.')
+        #all valid domains are of atleast length 3
+        domain_parts = domain_parts[:-3] #remove the last 3
+        #if len(domain_parts) != 0:
+            #check for valid subdomains
+            #tbd
+            #return False
 
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"

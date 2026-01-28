@@ -42,5 +42,11 @@ class TestisValid(unittest.TestCase):
         url = 'https://vim.rtorr.com/'
         self.assertFalse(is_valid(url))
 
+        url = 'https://www.ics.uci.edu.com.virus/'
+        self.assertFalse(is_valid(url))
+
+        url = 'mailto:abc@test.com'
+        self.assertFalse(is_valid(url))
+
 if __name__ == "__main__":
     unittest.main()
