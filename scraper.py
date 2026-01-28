@@ -9,7 +9,22 @@ def extract_next_links(url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
+    url = resp.url
     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
+    if resp.status != 200:
+        #check error
+        error = resp.error
+        """
+        details regarding error codes can be found at https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+        100-200 everything good continue
+        201 creates the content in a URI and can result in a 202
+        202 is a pending request and should have a timestamp of when resources are given
+        203 is a 200 but the info provided was sourced elsewhere 
+        204 accepted the connection but the server has no content to return - good skip for parsing here
+        205 allows user input
+        206 The request MUST have included a Range header field
+        """
+
     # resp.error: when status is not 200, you can check the error here, if needed.
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
@@ -49,7 +64,7 @@ def is_valid(url):
             + r"|^(\d+-){3}\d+\." #IP address subdomains
             + r"|^\d+\.", domain #all numbers
         )
-
+        #this is the file type checker, was in the project from the start - might need to be added to
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
             + r"|png|tiff?|mid|mp2|mp3|mp4"
