@@ -43,7 +43,8 @@ def is_valid(url):
             + r"|^[a-z0-9]{8,}\."# random nonsense strings
             + r"|^([a-z0-9-]+\.){5,}"# too many subdomains
             + r"|^(mail|admin|ftp|test|dev|staging|beta|preview|sandbox|demo|qa|srv|node|host|lb)\." #junk, can be added to
-            + r"|^([a-z0-9-]+)\.\1\.\1\." # 3 repeated subdomains
+            + r"|^(srv|node|host|lb)\d+\." #junk followed by a number, more for servers and hosting platforms
+            + r"|^([a-z0-9-]+)\.\1\." # repeated subdomains
             + r"|^v\d+(\.|-)" #version number subdomain
             + r"|^(\d+-){3}\d+\." #IP address subdomains
             + r"|^\d+\.", domain #all numbers

@@ -84,10 +84,16 @@ class TestisValid(unittest.TestCase):
         url = "https://cs.ics.uci.edu.evil/"
         self.assertFalse(is_valid(url))
 
-        url = "192-168-1-2.ics.uci.edu"
+        url = "https://192-168-1-2.ics.uci.edu"
         self.assertFalse(is_valid(url))
 
-        url = "host07.ics.uci.edu"
+        url = "https://host07.ics.uci.edu"
+        self.assertFalse(is_valid(url))
+
+        url = "https://test.test.test.ics.uci.edu"
+        self.assertFalse(is_valid(url))
+
+        url = "https://test.test.ics.uci.edu"
         self.assertFalse(is_valid(url))
 
 if __name__ == "__main__":
