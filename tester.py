@@ -1,6 +1,11 @@
 #tester to be implemented to test certain sections
 import unittest
 from scraper import is_valid
+from configparser import ConfigParser
+from utils.config import Config
+from utils import get_logger
+from utils.download import download
+import scraper
 
 class TestisValid(unittest.TestCase):
     #According to Nam
@@ -101,6 +106,19 @@ class TestisValid(unittest.TestCase):
 
         url = "https://test.test.ics.uci.edu"
         self.assertFalse(is_valid(url))
+
+class TestDownloadUrl(unittest.TestCase):
+    def setUp(self):
+        cparser = ConfigParser()
+        cparser.read("config.ini")
+        self.config = Config(cparser)
+        self.logger = get_logger(f"Tester-{0}", "Tester")
+    def test_what_does_resp_look_like(self):
+        # tbd_url = "URL TO DOWNLOAD"
+        # resp = download(tbd_url, self.config, self.logger)
+        # print(resp)
+        # scraped_urls = scraper.scraper(tbd_url, resp)
+        pass
 
 if __name__ == "__main__":
     unittest.main()
