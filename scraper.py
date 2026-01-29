@@ -16,23 +16,7 @@ def extract_next_links(url, resp):
         error = resp.error
         """
         details regarding error codes can be found at https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
-        100-200 everything good continue
-        201 creates the content in a URI and can result in a 202
-        202 is a pending request and should have a timestamp of when resources are given
-        203 is a 200 but the info provided was sourced elsewhere 
-        204 accepted the connection but the server has no content to return - good skip for parsing here
-        205 allows user input
-        206 The request MUST have included a Range header field
-        300 The thing requested was found but exists in multiple versions such as different file type, choose one
-        301 Site has been moved, provides a url to the new site
-        302 Site is temporarily at a different URL, keep using the old one
-        303 I handled your request, using GET go look at this other url for your results
-        304 The page has not been changed since you last looked at it - can follow any error code including 200 - would be good to check for skipping parsing
-        305 the requested resources must be found at the provided proxy in the location field
-        306 A resevered code that doesnt do anything
-        307 The resource is temporarily at another URL, go there and repeat request
-        400 The client performed a request with bad syntax, must be modified before requesting again
-        
+        Detailing individual codes got too lengthy so I moved them to a text file called 'QuickErrorLookup.txt'
         """
 
     # resp.error: when status is not 200, you can check the error here, if needed.
