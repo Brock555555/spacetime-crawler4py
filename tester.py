@@ -3,8 +3,14 @@ import unittest
 from scraper import is_valid
 
 class TestisValid(unittest.TestCase):
-
-    def test_valid_url(self): #waiting to hear back on ed
+    #According to Nam
+    """
+    You need to crawl *.ics.uci.edu/* . The asterisk (*) is a quantifier that applies to
+    the preceding regular expression element. It specifies that the preceding element may 
+    occur zero or more times. 
+    Essentially anything of the kind www.ics or just ics is valid
+    """
+    def test_valid_url(self):
         url = "https://www.ics.uci.edu/"
         self.assertTrue(is_valid(url))
 
