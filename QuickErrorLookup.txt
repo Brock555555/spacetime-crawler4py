@@ -22,3 +22,4 @@
 406 Not Acceptable, The resource identified by the request is only capable of generating response entities which have content characteristics not acceptable according to the accept headers sent in the request.
 407 This code is similar to 401 (Unauthorized), but indicates that the client must first authenticate itself with the proxy. 
 408 Request Timeout- The client did not produce a request within the time that the server was prepared to wait. The client MAY repeat the request without modifications at any later time.
+to be continued
