@@ -55,7 +55,7 @@ def is_valid(url):
             return False #its crude but gets it in around O(1) - O(n) for larger string domains
         #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
         #now for the prefix check, we have a valid domain suffix but the subdomain needs to be checked
-        if not re.match(
+        if re.match(
             r"^(www\.){2,}" #block www.www.
             + r"|^[a-z0-9]{8,}\."# random nonsense strings
             + r"|^([a-z0-9-]+\.){5,}"# too many subdomains
@@ -66,16 +66,17 @@ def is_valid(url):
             + r"|^(\d+-){3}\d+\." #IP address subdomains
             + r"|^\d+\.", domain #all numbers
         ):
+            return False
         #this is the file type checker, was in the project from the start - might need to be added to
-            return not re.match(
-                r".*\.(css|js|bmp|gif|jpe?g|ico"
-                + r"|png|tiff?|mid|mp2|mp3|mp4"
-                + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-                + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-                + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-                + r"|epub|dll|cnf|tgz|sha1"
-                + r"|thmx|mso|arff|rtf|jar|csv"
-                + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+        return not re.match(
+            r".*\.(css|js|bmp|gif|jpe?g|ico"
+            + r"|png|tiff?|mid|mp2|mp3|mp4"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|cnf|tgz|sha1"
+            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", parsed)
