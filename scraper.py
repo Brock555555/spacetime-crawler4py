@@ -1,5 +1,6 @@
 import re
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -28,9 +29,14 @@ def extract_next_links(url, resp):
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
+    #this is from me writing
     #with open("example.txt", "a") as f:
         #f.write("resp.raw_response.url")
        # f.write(resp.raw_response.content.decode('utf-8', errors='ignore')) was able to see what this does
+
+    soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+    print(soup.title.text)
+    #print(soup.body.text)
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     #testing git setup
     return list()
