@@ -11,18 +11,26 @@ def extract_next_links(url, resp):
     # resp.url: the actual url of the page
     url = resp.url
     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
+    # resp.error: when status is not 200, you can check the error here, if needed.
+    print(f'Got status code of {resp.status}')
     if resp.status != 200:
         #check error
         error = resp.error
+        if error > 200:
+            #handle it
+            #currently just skip the urls that return these
+            print(f'Got error code of {error} on this connection')
+            pass
         """
         details regarding error codes can be found at https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
         Detailing individual codes got too lengthy so I moved them to a text file called 'QuickErrorLookup.txt'
         """
-
-    # resp.error: when status is not 200, you can check the error here, if needed.
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
+    #with open("example.txt", "a") as f:
+        #f.write("resp.raw_response.url")
+       # f.write(resp.raw_response.content.decode('utf-8', errors='ignore')) was able to see what this does
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     #testing git setup
     return list()
