@@ -3,6 +3,7 @@ import unittest
 from scraper import is_valid
 from configparser import ConfigParser
 from utils.config import Config
+from utils.server_registration import get_cache_server
 from utils import get_logger
 from utils.download import download
 import scraper
@@ -112,12 +113,13 @@ class TestDownloadUrl(unittest.TestCase):
         cparser = ConfigParser()
         cparser.read("config.ini")
         self.config = Config(cparser)
+        self.config.cache_server = get_cache_server(self.config, True)
         #self.config.cache_server = ("localhost", 8080) #fake cache server for testing purposes, doesnt work
         self.logger = get_logger(f"Tester-{0}", "Tester")
     def test_what_does_resp_look_like(self):
-        #tbd_url = "https://www.ics.uci.edu/"
-        #resp = download(tbd_url, self.config, self.logger)
-        #print(resp)
+        # tbd_url = "https://www.ics.uci.edu/"
+        # resp = download(tbd_url, self.config, self.logger)
+        # print(resp)
         #scraped_urls = scraper.scraper(tbd_url, resp)
         pass
         #we somehow need to access their cache server to test this, its done in launch.py
