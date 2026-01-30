@@ -22,4 +22,14 @@
 406 Not Acceptable, The resource identified by the request is only capable of generating response entities which have content characteristics not acceptable according to the accept headers sent in the request.
 407 This code is similar to 401 (Unauthorized), but indicates that the client must first authenticate itself with the proxy. 
 408 Request Timeout- The client did not produce a request within the time that the server was prepared to wait. The client MAY repeat the request without modifications at any later time.
-to be continued
+409 The request could not be completed due to a conflict with the current state of the resource. This code is only allowed in situations where it is expected that the user might be able to resolve the conflict and resubmit the request.
+410 Gone - skip this url
+411 Length Required
+411 The server refuses to accept the request without a defined Content- Length. The client MAY repeat the request if it adds a valid Content-Length header field containing the length of the message-body in the request message.
+412 request failed becuase preconditions in header file are false
+413 Request Entity Too Large
+414 Request-URI Too Long, The server is refusing to service the request because the Request-URI is longer than the server is willing to interpret. This rare condition is only likely to occur when a client has improperly converted a POST request to a GET request with long query information, 
+415 Unsupported Media Type - The server is refusing to service the request because the entity of the request is in a format not supported by the requested resource for the requested method.
+416 Requested Range Not Satisfiable if range header is included
+417 Expectation Failed the expectation given in an Expect request-header field (see section 14.20) could not be met by this server,
+500+ The server itself is having issues and can be skipped
