@@ -127,6 +127,11 @@ def is_valid(url):
             + r"|^\d+\.", domain #all numbers
         ):
             return False
+
+        #avoids common query-based traps (like calendars)
+        if re.search(r"share=|replytocom=|calendar=|action=login", parsed.query.lower()):
+            return False
+            
         #this is the file type checker, was in the project from the start - might need to be added to
         return not re.match(
             r".*\.(css|js|bmp|gif|jpe?g|ico"
@@ -141,4 +146,5 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
