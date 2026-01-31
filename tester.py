@@ -108,7 +108,26 @@ class TestisValid(unittest.TestCase):
         url = "https://test.test.ics.uci.edu"
         self.assertFalse(is_valid(url))
 
-class TestDownloadUrl(unittest.TestCase):
+class TestHtmlParsing(unittest.TestCase):
+    def test_get_link_locations(self):
+        with open("example.txt", "r", encoding = "utf-8") as test_file:
+            text = test_file.read()
+        indices = scraper.get_link_locations(text)
+        for index in indices:
+            self.assertTrue(isinstance(index, int))
+            self.assertEqual(text[index-5], "h")
+    def test_get_links(self):
+        with open("example.txt", "r", encoding = "utf-8") as test_file:
+            text = test_file.read()
+        links = scraper.get_links_from(text)
+        self.assertEqual(len(links), 59)
+        for link in links:
+            self.assertTrue(isinstance(link, str))
+            self.assertTrue("http" in link)
+            print(link)
+
+
+'''class TestDownloadUrl(unittest.TestCase):
     def setUp(self):
         # same config startup as in launch.py
         cparser = ConfigParser()
@@ -123,7 +142,7 @@ class TestDownloadUrl(unittest.TestCase):
         print(resp)
         #scraped_urls = scraper.scraper(tbd_url, resp)
         pass
-        #we somehow need to access their cache server to test this, its done in launch.py
+        #we somehow need to access their cache server to test this, its done in launch.py'''
 
 if __name__ == "__main__":
     unittest.main()
