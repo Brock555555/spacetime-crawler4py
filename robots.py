@@ -37,3 +37,4 @@ def robots(url, config_file="config.ini"):
         except AttributeError:
             return str(resp.raw_response)
     return None
+    #return sitemap list of links and parse file if were allowed to or not
