@@ -110,16 +110,17 @@ class TestisValid(unittest.TestCase):
 
 class TestDownloadUrl(unittest.TestCase):
     def setUp(self):
+        # same config startup as in launch.py
         cparser = ConfigParser()
         cparser.read("config.ini")
         self.config = Config(cparser)
-        self.config.cache_server = get_cache_server(self.config, True)
+        self.config.cache_server = get_cache_server(self.config, False)
         #self.config.cache_server = ("localhost", 8080) #fake cache server for testing purposes, doesnt work
         self.logger = get_logger(f"Tester-{0}", "Tester")
     def test_what_does_resp_look_like(self):
-        # tbd_url = "https://www.ics.uci.edu/"
-        # resp = download(tbd_url, self.config, self.logger)
-        # print(resp)
+        tbd_url = "https://www.ics.uci.edu/"
+        resp = download(tbd_url, self.config, self.logger)
+        print(resp)
         #scraped_urls = scraper.scraper(tbd_url, resp)
         pass
         #we somehow need to access their cache server to test this, its done in launch.py
