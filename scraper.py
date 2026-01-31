@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
+from robots import robots
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -33,10 +34,15 @@ def extract_next_links(url, resp):
     #with open("example.txt", "a") as f:
         #f.write("resp.raw_response.url")
        # f.write(resp.raw_response.content.decode('utf-8', errors='ignore')) was able to see what this does
-
+    #check for robots.txt
+    robot_content = robots(url) #currently just prints the file
+    if robot_content:
+        print(robot_content)
+    #parsing title
     soup = BeautifulSoup(resp.raw_response.content, "html.parser")
     print(soup.title.text)
     #print(soup.body.text)
+    # only grab links with a href attribute and <a>
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     #testing git setup
     return list()
