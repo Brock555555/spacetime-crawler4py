@@ -7,6 +7,14 @@ def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
+"""
+- think we should remove get_link_loc and get_link_from 
+because we have BeautifulSoup which is probably better
+and I think they will cause our crawler to fail by 
+missing links that don't contain "http."
+"""
+
+
 def get_link_locations(text: str):
     """
     This function looks for "href=" in the webpage text.
@@ -146,5 +154,6 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
