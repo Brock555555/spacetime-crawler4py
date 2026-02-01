@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urldefrag, urljoin
 from bs4 import BeautifulSoup
 from robots import robots
 
@@ -7,48 +7,54 @@ def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
+
 def extract_next_links(url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
     # resp.error: when status is not 200, you can check the error here, if needed.
-    print(f'Got status code of {resp.status}')
-    if resp.status != 200:
-        #check error
-        error = resp.error
-        if error > 200:
-            #handle it
-            #currently just skip the urls that return these
-            print(f'Got error code of {error} on this connection')
-            pass
-        """
-        details regarding error codes can be found at https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
-        Detailing individual codes got too lengthy so I moved them to a text file called 'QuickErrorLookup.txt'
-        """
     # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
-    #this is from me writing
-    #with open("example.txt", "a") as f:
-        #f.write("resp.raw_response.url")
-       # f.write(resp.raw_response.content.decode('utf-8', errors='ignore')) was able to see what this does
-    #check for robots.txt
-    robot_content = robots(url) #currently just prints the file
-    if robot_content:
-        print(robot_content)
-    #parsing title
-    soup = BeautifulSoup(resp.raw_response.content, "html.parser")
-    print(soup.title.text)
-    #print(soup.body.text)
-    # only grab links with a href attribute and <a>
-    links = list()
-    for link in soup.find_all('a', href = True):
-        links.append(link['href'])
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    #testing git setup
-    #return list()
-    return links
+
+    #only process successful 200 OK responses
+    if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:
+        return []
+    links = []
+    try:
+        #parse raw bytes of page content into soupe obj
+        soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+        text = soup.get_text() #get all text on page, remove HTML tags
+        words = re.findall(r'[a-zA-Z0-9]+', text.lower()) #finds sequence of 1/+ alpha character
+        #convert everything to lowercase so upper and lower same words count as 1
+        #[a-zA-Z0-9]+: ignors symbols
+
+        """
+        extra things:
+        1. count words on curr page to find longest one
+        2. frequency tracking
+        3. list of subdomains and unique pages
+        4. near-dup detection
+        """
+
+        #TODO: add robot checking???
+
+        #look for all <a> tags with "href" to find out where to go next
+        for a in soup.find_all("a", href=True):
+            #if raw_href is index.html, urljoin joins it together with resp.url
+            absolute_url = urljoin(resp.url, a["href"])
+
+            #separate same pages with urldefrag and keep base part
+            base_url = urldefrag(absolute_url)[0]
+            links.append(base_url)
+    except Exception as e:
+        #log error if page is malformed and return empty list so cralwer doesn't crash
+        # print(f"Error parsing content for {url}")
+        return []
+    return links #return final list of discovered URLS to crawler
+
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
@@ -101,6 +107,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
 
