@@ -109,6 +109,7 @@ class TestisValid(unittest.TestCase):
         self.assertFalse(is_valid(url))
 
 class TestHtmlParsing(unittest.TestCase):
+    '''
     def test_get_link_locations(self):
         with open("example.txt", "r", encoding = "utf-8") as test_file:
             text = test_file.read()
@@ -125,6 +126,8 @@ class TestHtmlParsing(unittest.TestCase):
             self.assertTrue(isinstance(link, str))
             self.assertTrue("http" in link)
             print(link)
+    '''
+
 
 
 '''class TestDownloadUrl(unittest.TestCase):

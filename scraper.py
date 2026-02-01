@@ -7,68 +7,11 @@ def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
-"""
-- think we should remove get_link_loc and get_link_from 
-because we have BeautifulSoup which is probably better
-and I think they will cause our crawler to fail by 
-missing links that don't contain "http."
-"""
-
-
-def get_link_locations(text: str):
-    """
-    This function looks for "href=" in the webpage text.
-    Those should precede valid links.
-    The indices are returned in a list.
-    """
-    magic_word = "href="
-    indices = []
-    index = text.find(magic_word)
-    while index != -1:
-        indices.append(index + 5)
-        index = text.find(magic_word, index + 5)
-    return indices
-
-def get_links_from(text: str):
-    """
-    This function gets the links from the webpage text.
-    Valid links start with http and are preceded by href= in the html response
-    They're returned in a list.
-    """
-    indices = get_link_locations(text)
-    links = []
-    url = []
-    for index in indices:
-        if text[index] in "\"\'":
-            i = index + 1
-            while text[i] not in "\"\'":
-                url.append(text[i])
-                i += 1
-            link = str().join(url)
-            url.clear()
-            if "http" in link:
-                links.append(link)
-    return links
-
-
 def extract_next_links(url, resp):
     # Implementation required.
     # url: the URL that was used to get the page
     # resp.url: the actual url of the page
     # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
-    """
-    Code 200 means this page was downloaded correctly.
-    So then we can process the webpage response.
-    """
-    if resp.status == 200:
-        if resp.raw_response is bytes:
-            text = resp.raw_response.decode("utf-8", errors = "replace")
-        else:
-            text = resp.raw_response
-        links = get_links_from(text)
-    """
-    Now we have to validate each link.
-    """
     # resp.error: when status is not 200, you can check the error here, if needed.
     print(f'Got status code of {resp.status}')
     if resp.status != 200:
@@ -99,9 +42,13 @@ def extract_next_links(url, resp):
     print(soup.title.text)
     #print(soup.body.text)
     # only grab links with a href attribute and <a>
+    links = list()
+    for link in soup.find_all('a', href = True):
+        links.append(link['href'])
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
     #testing git setup
-    return list()
+    #return list()
+    return links
 
 def is_valid(url):
     # Decide whether to crawl this url or not. 
