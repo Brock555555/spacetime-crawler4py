@@ -2,26 +2,51 @@ import re
 from urllib.parse import urlparse, urldefrag, urljoin
 from bs4 import BeautifulSoup
 from robots import robots
+from collections import Counter
+
+word_count = Counter()
+subdomainCount = Counter()
+unique_urls = set() #TODO: still need to do
+max_words = 0
+longest_page_url = ""
+stopwords = set("""
+a about above after again against all am an and any are aren't as at be because 
+been before being below between both but by can't cannot could couldn't did 
+didn't do does doesn't doing don't down during each few for from further had 
+hadn't has hasn't have haven't having he he'd he'll he's her here here's hers 
+herself him himself his how how's i i'd i'll i'm i've if in into is isn't it 
+it's its itself let's me more most mustn't my myself no nor not of off on once 
+only or other ought our ours ourselves out over own same shan't she she'd she'll 
+she's should shouldn't so some such than that that's the their theirs them 
+themselves then there there's these they they'd they'll they're they've this 
+those through to too under until up very was wasn't we we'd we'll we're we've 
+were weren't what what's when when's where where's which while who who's whom 
+why why's with won't would wouldn't you you'd you'll you're you've your yours 
+yourself yourselves
+""".split())
+
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
     return [link for link in links if is_valid(link)]
 
-
 def extract_next_links(url, resp):
-    # Implementation required.
-    # url: the URL that was used to get the page
-    # resp.url: the actual url of the page
-    # resp.status: the status code returned by the server. 200 is OK, you got the page. Other numbers mean that there was some kind of problem.
-    # resp.error: when status is not 200, you can check the error here, if needed.
-    # resp.raw_response: this is where the page actually is. More specifically, the raw_response has two parts:
-    #         resp.raw_response.url: the url, again
-    #         resp.raw_response.content: the content of the page!
-    # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
+    global word_count
+    global max_words
+    global longest_page_url
+    global subdomainCount
 
     #only process successful 200 OK responses
     if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:
         return []
+    #break URL into components (scheme, netloc, path, etc) to isolate domain
+    parsed_url = urlparse(url)
+    #get network loc and convert to lowercase for consistency
+    host = parsed_url.netloc.lower()
+    #check if host belongs to ICS domain
+    if host.endswith(".ics.uci.edu") or host == "ics.uci.edu":
+        subdomainCount[host]+=1
+
     links = []
     try:
         #parse raw bytes of page content into soupe obj
@@ -31,12 +56,27 @@ def extract_next_links(url, resp):
         #convert everything to lowercase so upper and lower same words count as 1
         #[a-zA-Z0-9]+: ignors symbols
 
+        count = len(words)
+        if count > max_words:
+            max_words = count
+            longest_page_url = url
+
+         #keep word if not stop word and len > 1
         """
-        extra things:
-        1. count words on curr page to find longest one
-        2. frequency tracking
-        3. list of subdomains and unique pages
-        4. near-dup detection
+        Filtering for words with a length greater than one removes "noise" like single-character 
+        artifacts, initials, math symbols, etc that don't carry meaningful information about the page content.
+        """
+        filtered_words = []
+        for i in words:
+            if i not in stopwords and len(i) > 1: 
+                filtered_words.append(i)
+        word_count.update(filtered_words)
+
+
+        #TODO:
+        """
+        1. list of unique pages
+        2. near-dup detection
         """
 
         #TODO: add robot checking???
@@ -45,7 +85,6 @@ def extract_next_links(url, resp):
         for a in soup.find_all("a", href=True):
             #if raw_href is index.html, urljoin joins it together with resp.url
             absolute_url = urljoin(resp.url, a["href"])
-
             #separate same pages with urldefrag and keep base part
             base_url = urldefrag(absolute_url)[0]
             links.append(base_url)
@@ -107,6 +146,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
 
