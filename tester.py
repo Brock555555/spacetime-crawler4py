@@ -7,6 +7,7 @@ from utils.server_registration import get_cache_server
 from utils import get_logger
 from utils.download import download
 import scraper
+from robots import robots
 
 class TestisValid(unittest.TestCase):
     #According to Nam
@@ -108,6 +109,7 @@ class TestisValid(unittest.TestCase):
         url = "https://test.test.ics.uci.edu"
         self.assertFalse(is_valid(url))
 
+
 class TestHtmlParsing(unittest.TestCase):
     '''
     def test_get_link_locations(self):
@@ -146,6 +148,21 @@ class TestHtmlParsing(unittest.TestCase):
         #scraped_urls = scraper.scraper(tbd_url, resp)
         pass
         #we somehow need to access their cache server to test this, its done in launch.py'''
+
+class Test_robots(unittest.TestCase):
+    def test_robots(self):
+        exists, blacklist, whitelist, links = robots("https://www.ics.uci.edu")
+        self.assertEqual(blacklist, {'/happening', '/people'})
+        self.assertEqual(whitelist, set())
+        self.assertEqual(links, set())
+        self.assertTrue(exists)
+
+        exists, blacklist, whitelist, links = robots("https://www.informatics.uci.edu/")
+        self.assertTrue(exists)
+        self.assertEqual(links, set())
+        self.assertEqual(blacklist, {'/wp-admin/', '/research/'})
+        self.assertEqual(whitelist, {'/research/gifts-grants/', '/research/undergraduate-research/', '/research/areas-of-expertise/', '/research/phd-research/', '/research/example-research-projects/', '/wp-admin/admin-ajax.php', '/research/masters-research/', '/research/past-dissertations/', '/research/labs-centers/'})
+
 
 if __name__ == "__main__":
     unittest.main()
