@@ -4,6 +4,29 @@ from bs4 import BeautifulSoup
 from robots import robots
 from collections import Counter
 
+#------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
+# 1. Crawler actually working and adding new urls to the frontier, must work when doing launch.py - check logs
+# 2. Handling of different error codes than 200 - see the QuickErrorLookup.txt file, Detect and avoid dead URLs that return a 200 status but no data
+# 3. Detect and avoid crawling very large files, especially if they have low information value
+# 4. Crawl all pages with high textual information content, Detect and avoid infinite traps, Detect and avoid sets of similar pages with no information
+# 5. Honor the politeness delay for each site, It is important to maintain the politeness to the cache server (on a per domain basis). AKA Robots.txt - mostly done but needs to be moved to worker.py, there is no delay check tho
+# 6. Data structure to store webpage content - think document data store
+# 7. be able to downloads files?
+# 8. Install Tmux for long term crawls
+# 9. update is_valid as needed to detect bad file extensions and traps
+
+#--------------Report stuff-----------------------
+# 1. Unique Pages
+# 2. Longest page
+# 3. Most common words
+# 4. Subdomain count
+
+#----------------Extra Credit stuff, to be done if we have time-----------------
+# 1. Implement exact and near webpage similarity detection
+# 2. Make the crawler multithreaded.
+
+
+
 word_count = Counter()
 subdomainCount = Counter()
 unique_urls = set() #TODO: still need to do
