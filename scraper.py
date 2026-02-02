@@ -79,8 +79,6 @@ def extract_next_links(url, resp):
         2. near-dup detection
         """
 
-        #TODO: add robot checking???
-
         #look for all <a> tags with "href" to find out where to go next
         for a in soup.find_all("a", href=True):
             #if raw_href is index.html, urljoin joins it together with resp.url
@@ -146,6 +144,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
 
