@@ -135,7 +135,8 @@ def is_valid(url):
         if not any(domain == d or domain.endswith("." + d) for d in allowed_domains):
             return False #its crude but gets it in around O(1) - O(n) for larger string domains
         #avoid calendar and event listing traps
-        if re.search(r"/events/|/event/|/calendar/|/day/\d{4}-\d{2}-\d{2}", parsed.path.lower()):
+        path = parsed.path.lower()
+        if path.startswith("/events/") or path == "/events":
             return False
 
         #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
@@ -154,7 +155,7 @@ def is_valid(url):
             return False
 
         #avoids common query-based traps (like calendars)
-        if re.search(r"share=|replytocom=|calendar=|action=login|ical=|outlook-ical=", parsed.query.lower()):
+        if re.search(r"share=|replytocom=|calendar=|action=login|ical=|outlook-ical=|tribe_", parsed.query.lower()):
             return False
 
             
@@ -172,6 +173,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
 
