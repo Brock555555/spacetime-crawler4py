@@ -134,8 +134,14 @@ def is_valid(url):
             return False #if domain is None
         if not any(domain == d or domain.endswith("." + d) for d in allowed_domains):
             return False #its crude but gets it in around O(1) - O(n) for larger string domains
-        #avoid calendar and event listing traps
+        
+        if domain.startswith("wiki."):
+            return False
+
+        
         path = parsed.path.lower()
+        query = parsed.query.lower()
+
         if (
             path.startswith("/events")
             or "/event/" in path
@@ -143,9 +149,11 @@ def is_valid(url):
             or re.search(r"/day/\d{4}-\d{2}-\d{2}", path)
         ):
             return False
-
-        query = parsed.query.lower()
-        if re.search(r"ical=|outlook-ical=|tribe_", query):
+        
+        if "doku.php" in path:
+            return False
+        
+        if re.search(r"do=media|tab_|image=|ical=|outlook-ical=|tribe_", query):
             return False
             
         if "seminar-series" in path and re.search(r"\d{4}-\d{4}", path):
@@ -181,6 +189,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
 
