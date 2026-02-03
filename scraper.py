@@ -142,6 +142,11 @@ def is_valid(url):
         path = parsed.path.lower()
         query = parsed.query.lower()
 
+        if re.search(r"/page/\d+", path):
+            page_num = int(re.search(r"/page/(\d+)", path).group(1))
+            if page_num > 5:
+                return False
+
         if (
             path.startswith("/events")
             or "/event/" in path
@@ -189,6 +194,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
 
