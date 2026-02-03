@@ -141,9 +141,28 @@ def is_valid(url):
         if not any(domain == d or domain.endswith("." + d) for d in allowed_domains):
             return False #its crude but gets it in around O(1) - O(n) for larger string domains
 
-                
+        #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
+        #now for the prefix check, we have a valid domain suffix but the subdomain needs to be checked
+        if re.match(
+            r"^(www\.){2,}" #block www.www.
+            + r"|^[a-z0-9]{8,}\."# random nonsense strings
+            + r"|^([a-z0-9-]+\.){5,}"# too many subdomains
+            + r"|^(mail|admin|ftp|test|dev|staging|beta|preview|sandbox|demo|qa|srv|node|host|lb)\." #junk, can be added to
+            + r"|^(srv|node|host|lb)\d+\." #junk followed by a number, more for servers and hosting platforms
+            + r"|^([a-z0-9-]+)\.\1\." # repeated subdomains
+            + r"|^v\d+(\.|-)" #version number subdomain
+            + r"|^(\d+-){3}\d+\." #IP address subdomains
+            + r"|^\d+\.", domain #all numbers
+        ):
+            return False
+        
+            
         path = parsed.path.lower()
         query = parsed.query.lower()
+
+        #avoid malformed URL patterns seen in logs
+        if '"' in path or "\\" in path:
+            return False
 
         if path.count('/') > 10: #avoide infinite directory recursion
             return False
@@ -193,22 +212,7 @@ def is_valid(url):
 
         if re.search(r"(/[^/]+)\1{2,}", path): #detects repeated path segments
             return False
-
-
-        #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
-        #now for the prefix check, we have a valid domain suffix but the subdomain needs to be checked
-        if re.match(
-            r"^(www\.){2,}" #block www.www.
-            + r"|^[a-z0-9]{8,}\."# random nonsense strings
-            + r"|^([a-z0-9-]+\.){5,}"# too many subdomains
-            + r"|^(mail|admin|ftp|test|dev|staging|beta|preview|sandbox|demo|qa|srv|node|host|lb)\." #junk, can be added to
-            + r"|^(srv|node|host|lb)\d+\." #junk followed by a number, more for servers and hosting platforms
-            + r"|^([a-z0-9-]+)\.\1\." # repeated subdomains
-            + r"|^v\d+(\.|-)" #version number subdomain
-            + r"|^(\d+-){3}\d+\." #IP address subdomains
-            + r"|^\d+\.", domain #all numbers
-        ):
-            return False
+    
             
         #this is the file type checker, was in the project from the start - might need to be added to
         return not re.match(
@@ -224,6 +228,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", url)
         return False
+
 
 
 
