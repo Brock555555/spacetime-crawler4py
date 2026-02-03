@@ -138,6 +138,8 @@ def is_valid(url):
         path = parsed.path.lower()
         if path.startswith("/events/") or path == "/events":
             return False
+        if "seminar-series" in parsed.path.lower() and re.search(r"\d{4}-\d{4}", parsed.path):
+            return False
 
         #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
         #now for the prefix check, we have a valid domain suffix but the subdomain needs to be checked
@@ -173,6 +175,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
 
