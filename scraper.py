@@ -164,35 +164,35 @@ def is_valid(url):
             return false #long urls usually traps
 
 
-        #had b4 but commented out
+       
         
-        # if domain.startswith("wiki."):
-        #     return False
+        if domain.startswith("wiki."):
+            return False
 
-        # if re.search(r"/page/\d+", path):
-        #     page_num = int(re.search(r"/page/(\d+)", path).group(1))
-        #     if page_num > 5:
-        #         return False
+        if re.search(r"/page/\d+", path):
+            page_num = int(re.search(r"/page/(\d+)", path).group(1))
+            if page_num > 5:
+                return False
 
-        # if (
-        #     path.startswith("/events")
-        #     or "/event/" in path
-        #     or "/calendar/" in path
-        #     or re.search(r"/day/\d{4}-\d{2}-\d{2}", path)
-        # ):
-        #     return False
+        if (
+            path.startswith("/events")
+            or "/event/" in path
+            or "/calendar/" in path
+            or re.search(r"/day/\d{4}-\d{2}-\d{2}", path)
+        ):
+            return False
         
-        # if "doku.php" in path:
-        #     return False
+        if "doku.php" in path:
+            return False
         
-        # if re.search(r"do=media|tab_|image=|ical=|outlook-ical=|tribe_", query):
-        #     return False
+        if re.search(r"do=media|tab_|image=|ical=|outlook-ical=|tribe_", query):
+            return False
             
-        # if "seminar-series" in path and re.search(r"\d{4}-\d{4}", path):
-        #     return False
+        if "seminar-series" in path and re.search(r"\d{4}-\d{4}", path):
+            return False
 
-        # if re.search(r"(/[^/]+)\1{2,}", path): #detects repeated path segments
-        #     return False
+        if re.search(r"(/[^/]+)\1{2,}", path): #detects repeated path segments
+            return False
 
 
         #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
@@ -224,6 +224,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", url)
         return False
+
 
 
 
