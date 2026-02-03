@@ -62,27 +62,41 @@ def extract_next_links(url, resp):
     #only process successful 200 OK responses
     if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:
         return []
+
+    unique = urldefrag(url)[0]
+    if unique in unique_urls:
+        return [] #already processed this content
+    unique_urls.add(unique)
+    
     #break URL into components (scheme, netloc, path, etc) to isolate domain
-    parsed_url = urlparse(url)
+    parsed_url = urlparse(unique)
     #get network loc and convert to lowercase for consistency
     host = parsed_url.netloc.lower()
     #check if host belongs to ICS domain
-    if host.endswith(".ics.uci.edu") or host == "ics.uci.edu":
+    if host.endswith(".uci.edu"):        
         subdomainCount[host]+=1
 
     links = []
     try:
         #parse raw bytes of page content into soupe obj
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
-        text = soup.get_text() #get all text on page, remove HTML tags
-        words = re.findall(r'[a-zA-Z0-9]+', text.lower()) #finds sequence of 1/+ alpha character
+
+        #remove script and style elements from word count
+        for ss in soup(["script", "style"]):
+            ss.decompose()
+
+        text = soup.get_text(separator=' ') #get all text on page, remove HTML tags
+        words = re.findall(r'[a-zA-Z0-9]{2,}', text.lower()) #finds sequence of 1/+ alpha character
         #convert everything to lowercase so upper and lower same words count as 1
         #[a-zA-Z0-9]+: ignors symbols
 
+        if len(words) < 50 and len(coup.find_all('a')) > 20: #detect low info content (avoids traps)
+            return []
+            
         count = len(words)
         if count > max_words:
             max_words = count
-            longest_page_url = url
+            longest_page_url = unique
 
          #keep word if not stop word and len > 1
         """
@@ -91,27 +105,20 @@ def extract_next_links(url, resp):
         """
         filtered_words = []
         for i in words:
-            if i not in stopwords and len(i) > 1: 
+            if i not in stopwords:  #took away and len(i) > 1
                 filtered_words.append(i)
         word_count.update(filtered_words)
-
-
-        #TODO:
-        """
-        1. list of unique pages
-        2. near-dup detection
-        """
 
         #look for all <a> tags with "href" to find out where to go next
         for a in soup.find_all("a", href=True):
             #if raw_href is index.html, urljoin joins it together with resp.url
-            absolute_url = urljoin(resp.url, a["href"])
+            absolute_url = urljoin(url, a["href"])
             #separate same pages with urldefrag and keep base part
             base_url = urldefrag(absolute_url)[0]
             links.append(base_url)
     except Exception as e:
         #log error if page is malformed and return empty list so cralwer doesn't crash
-        # print(f"Error parsing content for {url}")
+        print(f"Error parsing content for {url}: {e}")
         return []
     return links #return final list of discovered URLS to crawler
 
@@ -122,47 +129,70 @@ def is_valid(url):
     # There are already some conditions that return False.
     try:
         parsed = urlparse(url)
-        if parsed.scheme not in set(["http", "https"]):
+        if parsed.scheme not in {"http", "https"}:
             return False
         #domain parsing here, 
         #from urlparse documentation scheme://netloc/path;parameters?query#fragment.
         #from slides scheme://domain:port/path?query_string#fragment_id
         allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"} #waiting to hear back on ed
-        domain = parsed.hostname #returns the entire domain, does not include the /before path, this does however include www.
+        domain = parsed.hostname.lower() if parsed.hostname else "" #returns the entire domain, does not include the /before path, this does however include www.
         #domain should already be lowercase
-        if not domain:
-            return False #if domain is None
+        
         if not any(domain == d or domain.endswith("." + d) for d in allowed_domains):
             return False #its crude but gets it in around O(1) - O(n) for larger string domains
-        
-        if domain.startswith("wiki."):
-            return False
 
-        
+                
         path = parsed.path.lower()
         query = parsed.query.lower()
 
-        if re.search(r"/page/\d+", path):
-            page_num = int(re.search(r"/page/(\d+)", path).group(1))
-            if page_num > 5:
-                return False
+        if path.count('/') > 10: #avoide infinite directory recursion
+            return False
 
-        if (
-            path.startswith("/events")
-            or "/event/" in path
-            or "/calendar/" in path
-            or re.search(r"/day/\d{4}-\d{2}-\d{2}", path)
-        ):
-            return False
+        if re.search(r"(/[^/]+)\1{2,}", path): #repeating directories trap
+            return False 
+
+        calendar_patterns = [
+            "calendar", "events", "day=", "month=", "year=", 
+            "outlook-ical", "action=download", "share="
+        ] #calendar trap
+
+        if any(p in path or p in query for p in calendar_patterns):
+            #block specific date queries
+            if re.search(r"\d{4}-\d{2}-\d{2}", path) or query != "":
+                return False
+        if len(url) > 200:
+            return false #long urls usually traps
+
+
+        #had b4 but commented out
         
-        if "doku.php" in path:
-            return False
+        # if domain.startswith("wiki."):
+        #     return False
+
+        # if re.search(r"/page/\d+", path):
+        #     page_num = int(re.search(r"/page/(\d+)", path).group(1))
+        #     if page_num > 5:
+        #         return False
+
+        # if (
+        #     path.startswith("/events")
+        #     or "/event/" in path
+        #     or "/calendar/" in path
+        #     or re.search(r"/day/\d{4}-\d{2}-\d{2}", path)
+        # ):
+        #     return False
         
-        if re.search(r"do=media|tab_|image=|ical=|outlook-ical=|tribe_", query):
-            return False
+        # if "doku.php" in path:
+        #     return False
+        
+        # if re.search(r"do=media|tab_|image=|ical=|outlook-ical=|tribe_", query):
+        #     return False
             
-        if "seminar-series" in path and re.search(r"\d{4}-\d{4}", path):
-            return False
+        # if "seminar-series" in path and re.search(r"\d{4}-\d{4}", path):
+        #     return False
+
+        # if re.search(r"(/[^/]+)\1{2,}", path): #detects repeated path segments
+        #     return False
 
 
         #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
@@ -192,8 +222,9 @@ def is_valid(url):
             + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
-        print ("TypeError for ", parsed)
-        raise
+        print ("TypeError for ", url)
+        return False
+
 
 
 
