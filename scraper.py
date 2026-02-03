@@ -90,7 +90,7 @@ def extract_next_links(url, resp):
         #convert everything to lowercase so upper and lower same words count as 1
         #[a-zA-Z0-9]+: ignors symbols
 
-        if len(words) < 50 and len(coup.find_all('a')) > 20: #detect low info content (avoids traps)
+        if len(words) < 50 and len(soup.find_all('a')) > 20: #detect low info content (avoids traps)
             return []
             
         count = len(words)
@@ -228,6 +228,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", url)
         return False
+
 
 
 
