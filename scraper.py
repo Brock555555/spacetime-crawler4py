@@ -136,10 +136,21 @@ def is_valid(url):
             return False #its crude but gets it in around O(1) - O(n) for larger string domains
         #avoid calendar and event listing traps
         path = parsed.path.lower()
-        if path.startswith("/events/") or path == "/events":
+        if (
+            path.startswith("/events")
+            or "/event/" in path
+            or "/calendar/" in path
+            or re.search(r"/day/\d{4}-\d{2}-\d{2}", path)
+        ):
             return False
-        if "seminar-series" in parsed.path.lower() and re.search(r"\d{4}-\d{4}", parsed.path):
+
+        query = parsed.query.lower()
+        if re.search(r"ical=|outlook-ical=|tribe_", query):
             return False
+            
+        if "seminar-series" in path and re.search(r"\d{4}-\d{4}", path):
+            return False
+
 
         #implemented this way also prevents traps in the suffix of the domain like ics.uci.edu.com.virus
         #now for the prefix check, we have a valid domain suffix but the subdomain needs to be checked
@@ -155,11 +166,6 @@ def is_valid(url):
             + r"|^\d+\.", domain #all numbers
         ):
             return False
-
-        #avoids common query-based traps (like calendars)
-        if re.search(r"share=|replytocom=|calendar=|action=login|ical=|outlook-ical=|tribe_", parsed.query.lower()):
-            return False
-
             
         #this is the file type checker, was in the project from the start - might need to be added to
         return not re.match(
@@ -175,6 +181,7 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
 
 
 
