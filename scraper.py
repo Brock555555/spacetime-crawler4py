@@ -163,6 +163,9 @@ def is_valid(url):
         #avoid malformed URL patterns seen in logs
         if '"' in path or "\\" in path:
             return False
+        
+        if "ml" in path:
+            return False #dont go into any Machine learning urls
 
         if path.count('/') > 10: #avoide infinite directory recursion
             return False
@@ -214,16 +217,8 @@ def is_valid(url):
             return False
     
             
-        #this is the file type checker, was in the project from the start - might need to be added to
-        return not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+        #this is the file type checker, changed to prevent any files and file extensions according to ed
+        return not re.search(r"\.[^/]+$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", url)
