@@ -5,7 +5,6 @@ from collections import Counter
 from lxml import etree
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
-# 1. Crawler actually working and adding new urls to the frontier, must work when doing launch.py - check logs
 # 2. Handling of different error codes than 200 - see the QuickErrorLookup.txt file, Detect and avoid dead URLs that return a 200 status but no data
 # 3. Detect and avoid crawling very large files, especially if they have low information value
 # 4. Crawl all pages with high textual information content, Detect and avoid infinite traps, Detect and avoid sets of similar pages with no information
