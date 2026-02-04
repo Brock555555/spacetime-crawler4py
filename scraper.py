@@ -49,11 +49,14 @@ yourself yourselves
 """.split())
 
 
-def scraper(url, resp):
-    links = extract_next_links(url, resp)
+def scraper(url, resp, blacklist, whitelist, site_map):
+    links = extract_next_links(url, resp, blacklist, whitelist, site_map)
     return [link for link in links if is_valid(link)]
 
-def extract_next_links(url, resp):
+def extract_next_links(url, resp, blacklist, whitelist, site_map):
+    #blacklist: a set of paths the crawler is not allowed to go into
+    #whitelist: a set of paths the crawler is only allowed into
+    #site_map, a set of more links from robots
     global word_count
     global max_words
     global longest_page_url
@@ -217,8 +220,17 @@ def is_valid(url):
             return False
     
             
-        #this is the file type checker, changed to prevent any files and file extensions according to ed
-        return not re.search(r"\.[^/]+$", parsed.path.lower())
+        #this is the file type checker, was in the project from the start - might need to be added to
+        #re added for xml
+        return not re.match(
+            r".*\.(css|js|bmp|gif|jpe?g|ico"
+            + r"|png|tiff?|mid|mp2|mp3|mp4"
+            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
+            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
+            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
+            + r"|epub|dll|cnf|tgz|sha1"
+            + r"|thmx|mso|arff|rtf|jar|csv"
+            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", url)
