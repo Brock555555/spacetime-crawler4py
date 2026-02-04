@@ -5,6 +5,7 @@ from collections import Counter
 from lxml import etree
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
+# 1. add sitemap links from sitemap parameter
 # 2. Handling of different error codes than 200 - see the QuickErrorLookup.txt file, Detect and avoid dead URLs that return a 200 status but no data
 # 3. Detect and avoid crawling very large files, especially if they have low information value
 # 4. Crawl all pages with high textual information content, Detect and avoid infinite traps, Detect and avoid sets of similar pages with no information
@@ -24,7 +25,7 @@ from lxml import etree
 # 1. Implement exact and near webpage similarity detection
 # 2. Make the crawler multithreaded.
 
-
+#I need to check insite.ics.uci.edu's robots.txt file to determine if its working correctly
 
 word_count = Counter()
 subdomainCount = Counter()
@@ -47,6 +48,7 @@ why why's with won't would wouldn't you you'd you'll you're you've your yours
 yourself yourselves
 """.split())
 
+error_urls = set() #will never add a url of this set again
 
 def scraper(url, resp, blacklist, whitelist, site_map):
     #print(blacklist, whitelist, site_map)
@@ -64,7 +66,8 @@ def extract_next_links(url, resp, site_map):
     XML = False
 
     #only process successful 200 OK responses
-    if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:
+    if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:#further error checking
+        error_urls.add(url)
         return []
 
     unique = urldefrag(url)[0]
@@ -139,10 +142,15 @@ def extract_next_links(url, resp, site_map):
 
 
 def is_valid(url, blacklist, whitelist):
+    #blacklist: a set of paths the crawler is not allowed to go into
+    #whitelist: a set of paths the crawler is only allowed into
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
+        if url in error_urls:
+            return False #dont do any further checking
+
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"}:
             return False
@@ -179,9 +187,10 @@ def is_valid(url, blacklist, whitelist):
         if '"' in path or "\\" in path:
             return False
         
-        if "ml" in path:
-            return False #dont go into any Machine learning urls
-
+        #add ml or dataset check
+        dataset_keywords = ("/data/", "/dataset/", "/downloads/")
+        if any(keyword in path for keyword in dataset_keywords):
+            return False
         #check against whitelist
         if whitelist and not any(path.startswith(wl) for wl in whitelist):
             return False
@@ -206,7 +215,7 @@ def is_valid(url, blacklist, whitelist):
             if re.search(r"\d{4}-\d{2}-\d{2}", path) or query != "":
                 return False
         if len(url) > 200:
-            return false #long urls usually traps
+            return False #long urls usually traps
 
 
        
@@ -243,14 +252,13 @@ def is_valid(url, blacklist, whitelist):
         #this is the file type checker, was in the project from the start - might need to be added to
         #re added for xml
         return not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            r".*\.(css|js|bmp|gif|jpe?g|ico|png|tiff?|svg|heic|webp|avif"
+            r"|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|flac|aac|webm"
+            r"|pdf|ps|eps|tex|ppt|pptx|pptm|doc|docx|docm|xls|xlsx|xlsm|odt|ods|odp"
+            r"|data|dat|exe|bz2|tar|tgz|xz|lzma|msi|bin|7z|7zip|psd|dmg|iso"
+            r"|c|h|cpp|hpp|java|py|ipynb|sh|pl|rb|php|bat|ps1|Makefile|emacs"
+            r"|epub|dll|cnf|cfg|conf|ini|thmx|mso|arff|rtf|jar|csv|log|md|txt|json|yaml|yml"
+            r"|rm|smil|wmv|swf|wma|zip|rar|gz|torrent|pem|crt|key|htm)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", url)
