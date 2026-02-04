@@ -62,6 +62,7 @@ def extract_next_links(url, resp, site_map):
     global max_words
     global longest_page_url
     global subdomainCount
+    XML = False
 
     #only process successful 200 OK responses
     if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:
@@ -86,7 +87,11 @@ def extract_next_links(url, resp, site_map):
         
         
         #parse raw bytes of page content into soupe obj
-        soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+        if resp.url.endswith(".xml") or "application/xml" in resp.raw_response.headers.get("Content-Type", ""):
+            soup = BeautifulSoup(resp.raw_response.content, "xml")
+            XML = True
+        else:
+            soup = BeautifulSoup(resp.raw_response.content, "html.parser")
 
         #remove script and style elements from word count
         for ss in soup(["script", "style"]):
@@ -116,13 +121,17 @@ def extract_next_links(url, resp, site_map):
                 filtered_words.append(i)
         word_count.update(filtered_words)
 
-        #look for all <a> tags with "href" to find out where to go next
-        for a in soup.find_all("a", href=True):
-            #if raw_href is index.html, urljoin joins it together with resp.url
-            absolute_url = urljoin(url, a["href"])
-            #separate same pages with urldefrag and keep base part
-            base_url = urldefrag(absolute_url)[0]
-            links.append(base_url)
+        if XML: #needs futher testing to see if it gets all of them
+            for loc in soup.find_all("loc"):
+                links.append(loc.text)
+        else:
+            #look for all <a> tags with "href" to find out where to go next
+            for a in soup.find_all("a", href=True):
+                #if raw_href is index.html, urljoin joins it together with resp.url
+                absolute_url = urljoin(url, a["href"])
+                #separate same pages with urldefrag and keep base part
+                base_url = urldefrag(absolute_url)[0]
+                links.append(base_url)
     except Exception as e:
         #log error if page is malformed and return empty list so cralwer doesn't crash
         print(f"Error parsing content for {url}: {e}")
@@ -173,6 +182,14 @@ def is_valid(url, blacklist, whitelist):
         
         if "ml" in path:
             return False #dont go into any Machine learning urls
+
+        #check against whitelist
+        if whitelist and not any(path.startswith(wl) for wl in whitelist):
+            return False
+        #check against blacklist
+        if any(path.startswith(bl) for bl in blacklist):
+            return False
+
 
         if path.count('/') > 10: #avoide infinite directory recursion
             return False
