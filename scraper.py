@@ -1,8 +1,8 @@
 import re
 from urllib.parse import urlparse, urldefrag, urljoin
 from bs4 import BeautifulSoup
-from robots import robots
 from collections import Counter
+from lxml import etree
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
 # 1. Crawler actually working and adding new urls to the frontier, must work when doing launch.py - check logs
@@ -50,10 +50,11 @@ yourself yourselves
 
 
 def scraper(url, resp, blacklist, whitelist, site_map):
-    links = extract_next_links(url, resp, blacklist, whitelist, site_map)
-    return [link for link in links if is_valid(link)]
+    #print(blacklist, whitelist, site_map)
+    links = extract_next_links(url, resp, site_map)
+    return [link for link in links if is_valid(link, blacklist, whitelist)]
 
-def extract_next_links(url, resp, blacklist, whitelist, site_map):
+def extract_next_links(url, resp, site_map):
     #blacklist: a set of paths the crawler is not allowed to go into
     #whitelist: a set of paths the crawler is only allowed into
     #site_map, a set of more links from robots
@@ -81,6 +82,9 @@ def extract_next_links(url, resp, blacklist, whitelist, site_map):
 
     links = []
     try:
+        #xml sitemaps would go here
+        
+        
         #parse raw bytes of page content into soupe obj
         soup = BeautifulSoup(resp.raw_response.content, "html.parser")
 
@@ -126,7 +130,7 @@ def extract_next_links(url, resp, blacklist, whitelist, site_map):
     return links #return final list of discovered URLS to crawler
 
 
-def is_valid(url):
+def is_valid(url, blacklist, whitelist):
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
