@@ -6,19 +6,18 @@ from lxml import etree
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
 # 1. add sitemap links from sitemap parameter
-# 2. Handling of different error codes than 200 - see the QuickErrorLookup.txt file, Detect and avoid dead URLs that return a 200 status but no data, has been worked on not finished
-# 3. Detect and avoid crawling very large files, especially if they have low information value
-# 4. Crawl all pages with high textual information content, Detect and avoid infinite traps, Detect and avoid sets of similar pages with no information
-# 5. Honor the politeness delay for each site, a default 500ms is used in worker but a robots dependent politeness isnt implemented
-# 6. Data structure to store webpage content - think document data store
-# 8. Install Tmux for long term crawls
-# 9. update is_valid as needed to detect bad file extensions and traps
+# 2. Verify USERAGENT is correct and crawler runs during deployment period
+# 3. Finalize large-file avoidance:
+#    - either add Content-Length heuristic
+#    - or document why extension + content filters suffice
+# 4. (OPTIONAL|FOR DEBUGGING) Data structure to store webpage content - think document data store
 
 #--------------Report stuff----------------------- <- getting moved to report.py
-# 1. Unique Pages
-# 2. Longest page
-# 3. Most common words
-# 4. Subdomain count
+# 1. Unique pages counted after fragment removal
+# 2. Top 50 words sorted by frequency
+# 3. Subdomains sorted alphabetically
+# 4. Subdomain counts are unique pages per subdomain, not raw visits
+# 5. Stopwords explicitly mentioned in report
 
 #----------------Extra Credit stuff, to be done if we have time-----------------
 # 1. Implement exact and near webpage similarity detection
@@ -262,6 +261,7 @@ def is_valid(url, blacklist, whitelist):
     except TypeError:
         print ("TypeError for ", url)
         return False
+
 
 
 
