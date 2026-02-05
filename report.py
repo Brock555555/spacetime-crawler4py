@@ -10,9 +10,11 @@ import re
 # 3. Most common words
 # 4. Subdomain count
 
-class Report(object):
+class Report():
+    WORD_COUNT = 50
     # class variable to handle multithreading
     report_queue = Queue()
+    word_bank = defaultdict()
 
     def __init__(self, worker_id: int, url, soup: BeautifulSoup):
         self.report = {"worker_id": worker_id, "url": url}
@@ -41,5 +43,10 @@ class Report(object):
         self.words = self.get_words(rep.soup)
         self.set_page_length(url, len(self.words))
         Report.report_queue.put(self.report)
-        
+
+    @classmethod
+    def aggregate_reports(cls):
+        while not Report.report_queue.empty():
+            report = Report.report_queue.get()
+            # unpack report and process
 

@@ -1,31 +1,29 @@
 import re
 from urllib.parse import urlparse, urldefrag, urljoin
 from bs4 import BeautifulSoup
-from robots import robots
 from collections import Counter
+from lxml import etree
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
-# 1. Crawler actually working and adding new urls to the frontier, must work when doing launch.py - check logs
-# 2. Handling of different error codes than 200 - see the QuickErrorLookup.txt file, Detect and avoid dead URLs that return a 200 status but no data
-# 3. Detect and avoid crawling very large files, especially if they have low information value
-# 4. Crawl all pages with high textual information content, Detect and avoid infinite traps, Detect and avoid sets of similar pages with no information
-# 5. Honor the politeness delay for each site, It is important to maintain the politeness to the cache server (on a per domain basis). AKA Robots.txt - mostly done but needs to be moved to worker.py, there is no delay check tho
-# 6. Data structure to store webpage content - think document data store
-# 7. be able to downloads files?
-# 8. Install Tmux for long term crawls
-# 9. update is_valid as needed to detect bad file extensions and traps
+# 1. add sitemap links from sitemap parameter
+# 2. Verify USERAGENT is correct and crawler runs during deployment period
+# 3. Finalize large-file avoidance:
+#    - either add Content-Length heuristic
+#    - or document why extension + content filters suffice
+# 4. (OPTIONAL|FOR DEBUGGING) Data structure to store webpage content - think document data store
 
-#--------------Report stuff-----------------------
-# 1. Unique Pages
-# 2. Longest page
-# 3. Most common words
-# 4. Subdomain count
+#--------------Report stuff----------------------- <- getting moved to report.py
+# 1. Unique pages counted after fragment removal
+# 2. Top 50 words sorted by frequency
+# 3. Subdomains sorted alphabetically
+# 4. Subdomain counts are unique pages per subdomain, not raw visits
+# 5. Stopwords explicitly mentioned in report
 
 #----------------Extra Credit stuff, to be done if we have time-----------------
 # 1. Implement exact and near webpage similarity detection
 # 2. Make the crawler multithreaded.
 
-
+#I need to check insite.ics.uci.edu's robots.txt file to determine if its working correctly
 
 word_count = Counter()
 subdomainCount = Counter()
@@ -48,19 +46,26 @@ why why's with won't would wouldn't you you'd you'll you're you've your yours
 yourself yourselves
 """.split())
 
+error_urls = set() #will never add a url of this set again
 
-def scraper(url, resp):
-    links = extract_next_links(url, resp)
-    return [link for link in links if is_valid(link)]
+def scraper(url, resp, blacklist, whitelist, site_map):
+    #print(blacklist, whitelist, site_map)
+    links = extract_next_links(url, resp, site_map)
+    return [link for link in links if is_valid(link, blacklist, whitelist)]
 
-def extract_next_links(url, resp):
+def extract_next_links(url, resp, site_map):
+    #blacklist: a set of paths the crawler is not allowed to go into
+    #whitelist: a set of paths the crawler is only allowed into
+    #site_map, a set of more links from robots
     global word_count
     global max_words
     global longest_page_url
     global subdomainCount
+    XML = False
 
     #only process successful 200 OK responses
-    if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:
+    if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:#further error checking
+        error_urls.add(url)
         return []
 
     unique = urldefrag(url)[0]
@@ -78,8 +83,15 @@ def extract_next_links(url, resp):
 
     links = []
     try:
+        #xml sitemaps would go here
+        
+        
         #parse raw bytes of page content into soupe obj
-        soup = BeautifulSoup(resp.raw_response.content, "html.parser")
+        if resp.url.endswith(".xml") or "application/xml" in resp.raw_response.headers.get("Content-Type", ""):
+            soup = BeautifulSoup(resp.raw_response.content, "xml")
+            XML = True
+        else:
+            soup = BeautifulSoup(resp.raw_response.content, "html.parser")
 
         #remove script and style elements from word count
         for ss in soup(["script", "style"]):
@@ -109,13 +121,17 @@ def extract_next_links(url, resp):
                 filtered_words.append(i)
         word_count.update(filtered_words)
 
-        #look for all <a> tags with "href" to find out where to go next
-        for a in soup.find_all("a", href=True):
-            #if raw_href is index.html, urljoin joins it together with resp.url
-            absolute_url = urljoin(url, a["href"])
-            #separate same pages with urldefrag and keep base part
-            base_url = urldefrag(absolute_url)[0]
-            links.append(base_url)
+        if XML: #needs futher testing to see if it gets all of them
+            for loc in soup.find_all("loc"):
+                links.append(loc.text)
+        else:
+            #look for all <a> tags with "href" to find out where to go next
+            for a in soup.find_all("a", href=True):
+                #if raw_href is index.html, urljoin joins it together with resp.url
+                absolute_url = urljoin(url, a["href"])
+                #separate same pages with urldefrag and keep base part
+                base_url = urldefrag(absolute_url)[0]
+                links.append(base_url)
     except Exception as e:
         #log error if page is malformed and return empty list so cralwer doesn't crash
         print(f"Error parsing content for {url}: {e}")
@@ -123,11 +139,16 @@ def extract_next_links(url, resp):
     return links #return final list of discovered URLS to crawler
 
 
-def is_valid(url):
+def is_valid(url, blacklist, whitelist):
+    #blacklist: a set of paths the crawler is not allowed to go into
+    #whitelist: a set of paths the crawler is only allowed into
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
+        if url in error_urls:
+            return False #dont do any further checking
+
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"}:
             return False
@@ -163,6 +184,18 @@ def is_valid(url):
         #avoid malformed URL patterns seen in logs
         if '"' in path or "\\" in path:
             return False
+        
+        #add ml or dataset check
+        dataset_keywords = ("/data/", "/dataset/", "/downloads/")
+        if any(keyword in path for keyword in dataset_keywords):
+            return False
+        #check against whitelist
+        if whitelist and not any(path.startswith(wl) for wl in whitelist):
+            return False
+        #check against blacklist
+        if any(path.startswith(bl) for bl in blacklist):
+            return False
+
 
         if path.count('/') > 10: #avoide infinite directory recursion
             return False
@@ -180,7 +213,7 @@ def is_valid(url):
             if re.search(r"\d{4}-\d{2}-\d{2}", path) or query != "":
                 return False
         if len(url) > 200:
-            return false #long urls usually traps
+            return False #long urls usually traps
 
 
        
@@ -215,19 +248,20 @@ def is_valid(url):
     
             
         #this is the file type checker, was in the project from the start - might need to be added to
+        #re added for xml
         return not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico"
-            + r"|png|tiff?|mid|mp2|mp3|mp4"
-            + r"|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|pdf"
-            + r"|ps|eps|tex|ppt|pptx|doc|docx|xls|xlsx|names"
-            + r"|data|dat|exe|bz2|tar|msi|bin|7z|psd|dmg|iso"
-            + r"|epub|dll|cnf|tgz|sha1"
-            + r"|thmx|mso|arff|rtf|jar|csv"
-            + r"|rm|smil|wmv|swf|wma|zip|rar|gz)$", parsed.path.lower())
+            r".*\.(css|js|bmp|gif|jpe?g|ico|png|tiff?|svg|heic|webp|avif"
+            r"|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|flac|aac|webm"
+            r"|pdf|ps|eps|tex|ppt|pptx|pptm|doc|docx|docm|xls|xlsx|xlsm|odt|ods|odp"
+            r"|data|dat|exe|bz2|tar|tgz|xz|lzma|msi|bin|7z|7zip|psd|dmg|iso"
+            r"|c|h|cpp|hpp|java|py|ipynb|sh|pl|rb|php|bat|ps1|Makefile|emacs"
+            r"|epub|dll|cnf|cfg|conf|ini|thmx|mso|arff|rtf|jar|csv|log|md|txt|json|yaml|yml"
+            r"|rm|smil|wmv|swf|wma|zip|rar|gz|torrent|pem|crt|key|htm)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", url)
         return False
+
 
 
 
