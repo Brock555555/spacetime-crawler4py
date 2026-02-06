@@ -36,7 +36,6 @@ class Report:
     def report_page_length(self, word_count: int):
         self.report["page length"] = word_count
 
-
     def is_comment(self, element):
         return isinstance(element, Comment)
 

@@ -6,12 +6,14 @@ from lxml import etree
 from report import Report
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
-# 1. add sitemap links from sitemap parameter
+# 1. add sitemap links from sitemap parameter # TODO: I'll try handling this - Daniela
 # 2. Verify USERAGENT is correct and crawler runs during deployment period
 # 3. Finalize large-file avoidance:
 #    - either add Content-Length heuristic
 #    - or document why extension + content filters suffice
 # 4. (OPTIONAL|FOR DEBUGGING) Data structure to store webpage content - think document data store
+# 5. Handle Ctrl+C KeyboardException
+# 6. Clean up code (reorganize, move things to where they go (scraper vs. worker vs. report), documentation, etc)
 
 #--------------Report stuff----------------------- <- getting moved to report.py
 # 1. Unique pages counted after fragment removal
@@ -24,11 +26,11 @@ from report import Report
 # 1. Implement exact and near webpage similarity detection
 # 2. Make the crawler multithreaded.
 
-#I need to check insite.ics.uci.edu's robots.txt file to determine if its working correctly
+# I need to check insite.ics.uci.edu's robots.txt file to determine if its working correctly
 
 word_count = Counter()
 subdomainCount = Counter()
-unique_urls = set() #TODO: still need to do
+unique_urls = set() # TODO: still need to do
 max_words = 0
 longest_page_url = ""
 stopwords = set("""
@@ -47,7 +49,7 @@ why why's with won't would wouldn't you you'd you'll you're you've your yours
 yourself yourselves
 """.split())
 
-error_urls = set() #will never add a url of this set again
+error_urls = set() #will never add a url of this set again # TODO: Move this into worker (to make it persistent) and make sure worker doesn't use the error URLS as well (those that returned error status)
 
 def scraper(url, resp, blacklist, whitelist, site_map):
     #print(blacklist, whitelist, site_map)
@@ -57,7 +59,7 @@ def scraper(url, resp, blacklist, whitelist, site_map):
 def extract_next_links(url, resp, site_map):
     #blacklist: a set of paths the crawler is not allowed to go into
     #whitelist: a set of paths the crawler is only allowed into
-    #site_map, a set of more links from robots
+    # site_map, a set of more links from robots
     global word_count
     global max_words
     global longest_page_url
@@ -85,7 +87,10 @@ def extract_next_links(url, resp, site_map):
     links = []
     try:
         #xml sitemaps would go here
-        
+        # TODO:
+        #  Copy links from site_map to links list
+        #  Make sure that the links are properly formatted when adding (XML-specific links??)
+        #
         
         #parse raw bytes of page content into soup obj
         if resp.url.endswith(".xml") or "application/xml" in resp.raw_response.headers.get("Content-Type", ""):
@@ -116,13 +121,14 @@ def extract_next_links(url, resp, site_map):
         Filtering for words with a length greater than one removes "noise" like single-character 
         artifacts, initials, math symbols, etc that don't carry meaningful information about the page content.
         """
+        # TODO: Move this to report.py
         filtered_words = []
         for i in words:
             if i not in stopwords:  #took away and len(i) > 1
                 filtered_words.append(i)
         word_count.update(filtered_words)
 
-        if XML: #needs futher testing to see if it gets all of them
+        if XML: #needs further testing to see if it gets all of them
             for loc in soup.find_all("loc"):
                 links.append(loc.text)
         else:
@@ -161,7 +167,7 @@ def is_valid(url, blacklist, whitelist):
         #domain parsing here, 
         #from urlparse documentation scheme://netloc/path;parameters?query#fragment.
         #from slides scheme://domain:port/path?query_string#fragment_id
-        allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"} #TODO: waiting to hear back on ed
+        allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"}
         domain = parsed.hostname.lower() if parsed.hostname else "" #returns the entire domain, does not include the /before path, this does however include www.
         #domain should already be lowercase
         
