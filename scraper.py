@@ -147,7 +147,7 @@ def extract_next_links(url, resp, site_map):
 
 def is_valid(url, blacklist, whitelist):
     #blacklist: a set of paths the crawler is not allowed to go into
-    #whitelist: a set of paths the crawler is only allowed into
+    #whitelist: a set of paths the crawler is allowed into from disallowed paths
     # Decide whether to crawl this url or not. 
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
@@ -195,12 +195,12 @@ def is_valid(url, blacklist, whitelist):
         dataset_keywords = ("/data/", "/dataset/", "/downloads/")
         if any(keyword in path for keyword in dataset_keywords):
             return False
-        #check against whitelist
-        if whitelist and not any(path.startswith(wl) for wl in whitelist):
-            return False
-        #check against blacklist
-        if any(path.startswith(bl) for bl in blacklist):
-            return False
+
+        #updated whitelist vs blacklist logic so that it will check specific paths
+        for bl in blacklist:
+            if path.startswith(bl):
+                if not any(path.startswith(w1) for w1 in whitelist):
+                    return False
 
 
         if path.count('/') > 10: #avoide infinite directory recursion
