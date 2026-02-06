@@ -6,8 +6,6 @@ from lxml import etree
 from report import Report
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
-# 1. add sitemap links from sitemap parameter # TODO: I'll try handling this - Daniela
-# 2. Verify USERAGENT is correct and crawler runs during deployment period
 # 3. Finalize large-file avoidance:
 #    - either add Content-Length heuristic
 #    - or document why extension + content filters suffice
@@ -26,7 +24,6 @@ from report import Report
 # 1. Implement exact and near webpage similarity detection
 # 2. Make the crawler multithreaded.
 
-# I need to check insite.ics.uci.edu's robots.txt file to determine if its working correctly
 
 word_count = Counter()
 subdomainCount = Counter()
@@ -57,13 +54,7 @@ def scraper(url, resp, blacklist, whitelist, site_map):
     return [link for link in links if is_valid(link, blacklist, whitelist)]
 
 def extract_next_links(url, resp, site_map):
-    #blacklist: a set of paths the crawler is not allowed to go into
-    #whitelist: a set of paths the crawler is only allowed into
     # site_map, a set of more links from robots
-    global word_count
-    global max_words
-    global longest_page_url
-    global subdomainCount
     XML = False
 
     #only process successful 200 OK responses
@@ -115,19 +106,7 @@ def extract_next_links(url, resp, site_map):
             max_words = count
             longest_page_url = unique
 
-        #keep word if not stop word and len > 1
-        """
-        Filtering for words with a length greater than one removes "noise" like single-character 
-        artifacts, initials, math symbols, etc that don't carry meaningful information about the page content.
-        """
-        # TODO: Move this to report.py
-        filtered_words = []
-        for i in words:
-            if i not in stopwords:  #took away and len(i) > 1
-                filtered_words.append(i)
-        word_count.update(filtered_words)
-
-        if XML: #needs further testing to see if it gets all of them
+        if XML: 
             for loc in soup.find_all("loc"):
                 links.append(loc.text)
         else:
