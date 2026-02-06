@@ -30,9 +30,12 @@ class Worker(Thread):
         parsed = urlparse(resp.url)
         domain = f"{parsed.scheme}://{parsed.netloc}"
 
-        # return cached robots info if already seen
+       # return cached robots info if already seen
         if domain in Worker.robots_cache:
-            return Worker.robots_cache[domain]
+            allowed, blacklisted, whitelisted, _ = Worker.robots_cache[domain]
+    
+            # Return empty sitemap on subsequent calls
+            return allowed, blacklisted, whitelisted, set() #prevents infinite sitemap loop, essentially discards the sitemap if its been used before
 
         # your existing algorithm
         if resp.status == 200 and resp.raw_response:
