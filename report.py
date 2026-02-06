@@ -33,9 +33,8 @@ class Report:
         # urllib.parse.urldefrag should work
         self.report["url"] = urldefrag(url)
 
-    def report_page_length(self, word_count: int):
-        self.report["page length"] = word_count
-
+    def report_page_length(self, words: list[str]):
+        self.report["page length"] = len(words)
 
     def is_comment(self, element):
         return isinstance(element, Comment)
@@ -62,11 +61,8 @@ class Report:
     def run(self):
         self.report_page_url(self.url)
         self.words = self.get_words(self.soup)
-        self.report_page_length(len(self.words))
+        self.report_page_length(self.words)
         self.report_word_frequencies(self.words)
-        # TODO: how to handle subdomain count?
-
-
         # Queue report
         Report.report_queue.put(self.report)
 
