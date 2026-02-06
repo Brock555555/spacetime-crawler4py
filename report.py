@@ -4,6 +4,7 @@ from queue import Queue
 from bs4 import BeautifulSoup, Comment
 from collections import defaultdict
 import re
+from urllib.parse import urldefrag
 
 #--------------Report stuff-----------------------
 # 1. Unique Pages
@@ -27,8 +28,8 @@ class Report:
         self.words = list()
 
     def report_page_url(self, url: str):
-        self.report["url"] = url
-        # TODO: how to remove fragments from url?
+        # urllib.parse.urldefrag should work
+        self.report["url"] = urldefrag(url)
 
     def report_page_length(self, word_count: int):
         self.report["page length"] = word_count
