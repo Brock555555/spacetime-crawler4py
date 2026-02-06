@@ -7,6 +7,7 @@ import scraper
 import time
 from urllib.parse import urlparse
 
+from frontier import lock
 
 class Worker(Thread):
     robots_cache = {} #for checking already seen robots files info
@@ -134,8 +135,10 @@ class Worker(Thread):
                     f"using cache {self.config.cache_server}.")
 
                 scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
-                for scraped_url in scraped_urls:
-                    self.frontier.add_url(scraped_url)
+                with lock:
+                    for scraped_url in scraped_urls:
+                        self.frontier.add_url(scraped_url)
 
-            self.frontier.mark_url_complete(tbd_url)
+            with lock:
+                self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)

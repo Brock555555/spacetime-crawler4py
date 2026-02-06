@@ -6,7 +6,7 @@ from lxml import etree
 from report import Report
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
-# 1. add sitemap links from sitemap parameter # TODO: I'll try handling this - Daniela
+# 1. add sitemap links from sitemap parameter
 # 2. Verify USERAGENT is correct and crawler runs during deployment period
 # 3. Finalize large-file avoidance:
 #    - either add Content-Length heuristic
