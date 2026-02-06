@@ -1,4 +1,4 @@
-from threading import Thread
+from threading import Thread, Lock
 
 from inspect import getsource
 from utils.download import download
@@ -9,8 +9,9 @@ from urllib.parse import urlparse
 
 
 class Worker(Thread):
-    robots_cache = {} #for checking already seen robots files info
-    seen_robots = set() #for already downloaded files
+    robots_cache = {} #for checking already seen robots files info dict[str, dict]
+    seen_robots = set() #for already downloaded files seen_robots = {"https://ics.uci.edu", "https://cs.uci.edu", "https://informatics.uci.edu",}
+    robots_lock = Lock()
     def __init__(self, worker_id, config, frontier):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
@@ -26,18 +27,17 @@ class Worker(Thread):
             f"using cache {self.config.cache_server}."
         )
 
-        # extract domain (scheme + netloc) for caching
+        # extract domain for caching
         parsed = urlparse(resp.url)
         domain = f"{parsed.scheme}://{parsed.netloc}"
 
        # return cached robots info if already seen
-        if domain in Worker.robots_cache:
-            allowed, blacklisted, whitelisted, _ = Worker.robots_cache[domain]
-    
-            # Return empty sitemap on subsequent calls
-            return allowed, blacklisted, whitelisted, set() #prevents infinite sitemap loop, essentially discards the sitemap if its been used before
+        with Worker.robots_lock:
+            if domain in Worker.robots_cache:
+                info = Worker.robots_cache[domain]
+                # Return empty sitemap on subsequent calls
+                return (info["allowed"], info["blacklist"], info["whitelist"], set())
 
-        # your existing algorithm
         if resp.status == 200 and resp.raw_response:
             blacklisted = set()
             whitelisted = set()
@@ -85,30 +85,30 @@ class Worker(Thread):
             result = True, set(), set(), set()
 
         # store in cache
-        Worker.robots_cache[domain] = result
+        with Worker.robots_lock:
+            Worker.robots_cache[domain] = {
+                "allowed": result[0],
+                "blacklist": result[1],
+                "whitelist": result[2],
+                "sitemap_links": result[3],}
         return result
 
 
     def get_robots_info(self, domain):
-        """Return cached robots info or download if not seen yet."""
-        if domain not in Worker.seen_robots:
+        with Worker.robots_lock:
+            need_download = domain not in Worker.seen_robots
+
+        if need_download:
             robots_url = f"{domain}/robots.txt"
             resp = download(robots_url, self.config, self.logger)
-            allowed, blacklisted, whitelisted, sitemap_links = self.robots(resp)
 
-            Worker.robots_cache[domain] = {
-                "allowed": allowed,
-                "blacklist": blacklisted,
-                "whitelist": whitelisted,
-                "sitemap_links": sitemap_links
-            }
-            Worker.seen_robots.add(domain)  # Mark domain as seen
+            self.robots(resp)
 
-            # Add sitemaps to frontier
-            for sitemap in sitemap_links:
-                self.frontier.add_url(sitemap)
+            with Worker.robots_lock:
+                Worker.seen_robots.add(domain)
 
-        return Worker.robots_cache[domain]
+        with Worker.robots_lock:
+            return Worker.robots_cache[domain]
 
     def run(self):
         while True:
