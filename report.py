@@ -53,6 +53,7 @@ class Report():
         Report.report_queue.put(self.report)
 
     @classmethod
+    # Call this in main thread (launch.py)
     def aggregate_reports(cls):
         while not Report.report_queue.empty():
             report = Report.report_queue.get()
