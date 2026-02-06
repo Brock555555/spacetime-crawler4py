@@ -86,11 +86,10 @@ def extract_next_links(url, resp, site_map):
 
     links = []
     try:
-        #xml sitemaps would go here
-        # TODO:
-        #  Copy links from site_map to links list
-        #  Make sure that the links are properly formatted when adding (XML-specific links??)
-        #
+        if site_map:
+            #just add the site_map links, it will get parsed when the frontier reaches it later
+            for site_map_url in site_map:
+                links.append(site_map_url)
         
         #parse raw bytes of page content into soup obj
         if resp.url.endswith(".xml") or "application/xml" in resp.raw_response.headers.get("Content-Type", ""):
