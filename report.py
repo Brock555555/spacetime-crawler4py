@@ -7,10 +7,12 @@ import re
 from urllib.parse import urldefrag
 
 #--------------Report stuff-----------------------
-# 1. Unique Pages
-# 2. Longest page
-# 3. Most common words
-# 4. Subdomain count
+# 1. Unique pages counted after fragment removal
+# 2. Longest page?
+# 3. Top 50 words sorted by frequency (most common words)
+# 4. Subdomains sorted alphabetically
+# 5. Subdomain counts are unique pages per subdomain, not raw visits (subdomain count)
+# 6. Stopwords explicitly mentioned in report
 
 class Report:
     # class Queue to handle multithreading
@@ -63,7 +65,7 @@ class Report:
         self.report_page_length(len(self.words))
         self.report_word_frequencies(self.words)
         # TODO: how to handle subdomain count?
-        
+
 
         # Queue report
         Report.report_queue.put(self.report)

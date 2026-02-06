@@ -87,7 +87,7 @@ def extract_next_links(url, resp, site_map):
         #xml sitemaps would go here
         
         
-        #parse raw bytes of page content into soupe obj
+        #parse raw bytes of page content into soup obj
         if resp.url.endswith(".xml") or "application/xml" in resp.raw_response.headers.get("Content-Type", ""):
             soup = BeautifulSoup(resp.raw_response.content, "xml")
             XML = True
@@ -101,7 +101,7 @@ def extract_next_links(url, resp, site_map):
         text = soup.get_text(separator=' ') #get all text on page, remove HTML tags
         words = re.findall(r'[a-zA-Z0-9]{2,}', text.lower()) #finds sequence of 1/+ alpha character
         #convert everything to lowercase so upper and lower same words count as 1
-        #[a-zA-Z0-9]+: ignors symbols
+        #[a-zA-Z0-9]+: ignores symbols
 
         if len(words) < 50 and len(soup.find_all('a')) > 20: #detect low info content (avoids traps)
             return []
@@ -111,7 +111,7 @@ def extract_next_links(url, resp, site_map):
             max_words = count
             longest_page_url = unique
 
-         #keep word if not stop word and len > 1
+        #keep word if not stop word and len > 1
         """
         Filtering for words with a length greater than one removes "noise" like single-character 
         artifacts, initials, math symbols, etc that don't carry meaningful information about the page content.
@@ -161,7 +161,7 @@ def is_valid(url, blacklist, whitelist):
         #domain parsing here, 
         #from urlparse documentation scheme://netloc/path;parameters?query#fragment.
         #from slides scheme://domain:port/path?query_string#fragment_id
-        allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"} #waiting to hear back on ed
+        allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"} #TODO: waiting to hear back on ed
         domain = parsed.hostname.lower() if parsed.hostname else "" #returns the entire domain, does not include the /before path, this does however include www.
         #domain should already be lowercase
         
