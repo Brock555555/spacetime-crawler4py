@@ -3,7 +3,7 @@ from urllib.parse import urlparse, urldefrag, urljoin
 from bs4 import BeautifulSoup
 from collections import Counter
 from lxml import etree
-import Report
+from report import Report
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
 # 1. add sitemap links from sitemap parameter
@@ -134,7 +134,7 @@ def extract_next_links(url, resp, site_map):
                 base_url = urldefrag(absolute_url)[0]
                 links.append(base_url)
 
-        # Call Report module.  Lmk if this is a suitable place to put this.
+        # Call report module.  Lmk if this is a suitable place to put this.
         report = Report(url, soup)
         report.run()
 

@@ -2,6 +2,7 @@
 
 from queue import Queue
 from bs4 import BeautifulSoup, Comment
+from collections import defaultdict
 import re
 
 #--------------Report stuff-----------------------
@@ -10,22 +11,28 @@ import re
 # 3. Most common words
 # 4. Subdomain count
 
-class Report():
-    WORD_COUNT = 50
-    # class variable to handle multithreading
+class Report:
+    # class Queue to handle multithreading
     report_queue = Queue()
-    word_bank = defaultdict()
+    unique_pages = set()
+    max_length = -1
+    max_page = ""
+    combined_word_frequencies = defaultdict(int)
+    top_50_words = []
 
     def __init__(self, url: str, soup: BeautifulSoup):
-        self.report = {}
+        self.report = dict()
+        self.url = url
         self.soup = soup
+        self.words = list()
 
     def report_page_url(self, url: str):
         self.report["url"] = url
-        # TODO: remove fragments from url
+        # TODO: how to remove fragments from url?
 
     def report_page_length(self, word_count: int):
-        self.report["length"] = word_count
+        self.report["page length"] = word_count
+
 
     def is_comment(self, element):
         return isinstance(element, Comment)
@@ -41,12 +48,20 @@ class Report():
         text = soup.get_text(separator=' ', strip=True)
         # tokenize by letters and apostrophes only
         words = re.findall(r"[a-zA-Z]+(?:'[a-zA-Z]+)*", text.lower())
+        return words
+
+    def report_word_frequencies(self, words: list[str]):
+        frequencies = defaultdict(int)
+        for word in words:
+            frequencies[word] += 1
+        self.report["word frequencies"] = frequencies
 
     def run(self):
-        self.words = self.get_words(self.soup)
         self.report_page_url(self.url)
+        self.words = self.get_words(self.soup)
         self.report_page_length(len(self.words))
-        # TODO: self.report_word_frequencies(words)
+        self.report_word_frequencies(self.words)
+        # TODO: how to handle subdomain count?
         
 
         # Queue report
@@ -57,5 +72,17 @@ class Report():
     def aggregate_reports(cls):
         while not Report.report_queue.empty():
             report = Report.report_queue.get()
-            # TODO: unpack report and process
+            # Add url to set and then count the length of the set
+            Report.unique_pages.add(report["url"])
+            # Update url of longest page length
+            if report["page length"] > Report.max_length:
+                Report.max_length = report["page length"]
+                Report.max_page = report["url"]
+            # Add/update word frequencies
+            for word, frequency in report["word frequencies"].items():
+                Report.combined_word_frequencies[word] += frequency
+        Report.top_50_words = sorted(Report.combined_word_frequencies,
+                             key = Report.combined_word_frequencies.get,
+                             reverse = True)[:50]
+            # TODO: count subdomains
 
