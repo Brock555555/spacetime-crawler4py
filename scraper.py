@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from collections import Counter
 from lxml import etree
 from report import Report
-from shared import error_lock, error_lock
+from shared import error_urls, error_lock
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
 # Finish Report so we can turn in our data
