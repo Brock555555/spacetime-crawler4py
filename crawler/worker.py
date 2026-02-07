@@ -7,7 +7,7 @@ import scraper
 import time
 from urllib.parse import urlparse
 
-from frontier import lock
+from crawler.frontier import lock
 
 class Worker(Thread):
     robots_cache = {} #for checking already seen robots files info dict[str, dict]
