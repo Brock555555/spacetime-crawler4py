@@ -171,7 +171,7 @@ class Worker(Thread):
                     if resp.status != 200:
                         with error_lock:
                             error_urls.add(tbd_url)
-                        with frontier_locklock:
+                        with frontier_lock:
                             self.frontier.mark_url_complete(tbd_url)
                             self.frontier.active_workers -= 1
                             self.frontier.condition.notify_all()
