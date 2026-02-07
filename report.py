@@ -4,24 +4,26 @@ from queue import Queue
 from bs4 import BeautifulSoup, Comment
 from collections import defaultdict
 import re
-from urllib.parse import urldefrag
+from urllib import parse
 
 #--------------Report stuff-----------------------
-# 1. Unique pages counted after fragment removal
-# 2. Longest page?
-# 3. Top 50 words sorted by frequency (most common words)
-# 4. Subdomains sorted alphabetically
-# 5. Subdomain counts are unique pages per subdomain, not raw visits (subdomain count)
-# 6. Stopwords explicitly mentioned in report
+# 1. Unique pages counted after fragment removal done
+# 2. Longest page? done
+# 3. Top 50 words sorted by frequency (most common words) WIP
+# 4. Subdomains sorted alphabetically done
+# 5. Subdomain counts are unique pages per subdomain, not raw visits (subdomain count) done
+# 6. Stopwords explicitly mentioned in report WIP
 
 class Report:
     # class Queue to handle multithreading
     report_queue = Queue()
     unique_pages = set()
+    subdomain_page_count = defaultdict(int)
+    sorted_subdomains = dict()
     max_length = -1
-    max_page = ""
+    max_page = str()
     combined_word_frequencies = defaultdict(int)
-    top_50_words = []
+    top_50_words = list(())
 
     def __init__(self, url: str, soup: BeautifulSoup):
         self.report = dict()
@@ -31,7 +33,7 @@ class Report:
 
     def report_page_url(self, url: str):
         # urllib.parse.urldefrag should work
-        self.report["url"] = urldefrag(url)
+        self.report["url"] = parse.urldefrag(url)
 
     def report_page_length(self, words: list[str]):
         self.report["page length"] = len(words)
@@ -70,6 +72,7 @@ class Report:
     # Call this in main thread (launch.py)
     def aggregate_reports(cls):
         while not Report.report_queue.empty():
+            # get the report from the queue
             report = Report.report_queue.get()
             # Add url to set and then count the length of the set
             Report.unique_pages.add(report["url"])
@@ -80,8 +83,18 @@ class Report:
             # Add/update word frequencies
             for word, frequency in report["word frequencies"].items():
                 Report.combined_word_frequencies[word] += frequency
+        # get the 50 most common words
         Report.top_50_words = sorted(Report.combined_word_frequencies,
                              key = Report.combined_word_frequencies.get,
                              reverse = True)[:50]
-            # TODO: count subdomains
+        # count the pages in each subdomain
+        for page in Report.unique_pages:
+            Report.subdomain_page_count[parse.urlparse(page).hostname] += 1
+        # sort them alphabetically into a new dict
+        Report.sorted_subdomains = dict(sorted(Report.subdomain_page_count.items()))
+
+    @classmethod
+    def write_results(cls, file_name = "report.txt"):
+        with open(file_name, 'w') as out_file:
+            out_file.write(f"Number of pages found: {len(Report.unique_pages)}")
 
