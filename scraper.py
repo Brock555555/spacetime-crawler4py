@@ -165,6 +165,8 @@ def is_valid(url, blacklist, whitelist):
         if path.startswith("/wiki/") and "version=" in query:
             return False
         
+        if any(x in path or x in query for x in ["image", "img", "photo", "gallery", "media"]):
+            return False
         #add ml or dataset check
         dataset_keywords = ("/data/", "/dataset/", "/downloads/")
         if any(keyword in path for keyword in dataset_keywords):
