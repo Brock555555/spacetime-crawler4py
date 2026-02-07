@@ -1,3 +1,6 @@
+import multiprocessing
+multiprocessing.set_start_method("fork", force=True)
+
 from configparser import ConfigParser
 from argparse import ArgumentParser
 
@@ -47,4 +50,5 @@ These are all the cache server error codes:
 608: Denied by domain robot rules
 
 You may ignore some of them, but not all.
+
 """
