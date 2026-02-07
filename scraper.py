@@ -238,7 +238,7 @@ def is_valid(url, blacklist, whitelist):
         #this is the file type checker, was in the project from the start - might need to be added to
         #re added for xml
         return not re.match(
-            r".*\.(css|js|bmp|gif|jpe?g|ico|png|tiff?|svg|heic|webp|avif"
+            r".*.(css|js|bmp|gif|jpe?g|ico|png|tiff?|svg|heic|webp|avif"
             r"|mid|mp2|mp3|mp4|wav|avi|mov|mpeg|ram|m4v|mkv|ogg|ogv|flac|aac|webm"
             r"|pdf|ps|eps|tex|ppt|pptx|pptm|doc|docx|docm|xls|xlsx|xlsm|odt|ods|odp"
             r"|data|dat|exe|bz2|tar|tgz|xz|lzma|msi|bin|7z|7zip|psd|dmg|iso"

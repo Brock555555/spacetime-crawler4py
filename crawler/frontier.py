@@ -91,7 +91,7 @@ class Frontier(object):
         Should be called each time a worker adds a set of urls to the frontier
         """
 
-        print(f"TO BE DOWNLOADED: {self.to_be_downloaded}")
+        # print(f"TO BE DOWNLOADED: {self.to_be_downloaded}")
 
         while self.to_be_downloaded:
             current_url = self.to_be_downloaded.pop()

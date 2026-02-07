@@ -52,7 +52,9 @@ class Worker(Thread):
                 text = resp.raw_response.content.decode("utf-8", errors="ignore")
                 for line in text.splitlines():
                     if line.startswith("Sitemap: "):
-                        link = line[9:]
+                        link = line[9:].strip().lower()
+                        if any(x in link for x in ["image", "img", "media", "video", "photo"]):
+                            continue
                         Site_map_links.add(link)
                         continue
                     if line.startswith("User-agent: "):
