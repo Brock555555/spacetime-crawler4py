@@ -59,7 +59,7 @@ class Report:
         frequencies = defaultdict(int)
         for word in words:
             # Don't report stop words
-            if word not in STOP_WORDS:
+            if len(word) > 1 and word not in STOP_WORDS:
                 frequencies[word] += 1
         self.report["word frequencies"] = frequencies
 
