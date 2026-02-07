@@ -3,6 +3,8 @@ from urllib.parse import urlparse, urldefrag, urljoin
 from bs4 import BeautifulSoup
 from collections import Counter
 from lxml import etree
+
+from PartA import computeWordFrequencies
 from report import Report
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
@@ -18,8 +20,8 @@ from report import Report
 
 #these two here are NOT thread safe
 unique_urls = set() # can still include for now? this currently prevents us from running duplicate urls
-error_urls = set() #will never add a url of this set again # TODO: Move this into worker (to make it persistent) and make sure worker doesn't use the error URLS as well (those that returned error status)
-allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"}
+error_urls = set() # will never add a url of this set again # TODO: Move this into worker (to make it persistent) and make sure worker doesn't use the error URLS as well (those that returned error status)
+allowed_domains = ["ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"]
 
 def scraper(url, resp, blacklist, whitelist, site_map):
     #print(blacklist, whitelist, site_map)
@@ -88,7 +90,6 @@ def extract_next_links(url, resp, site_map):
         print(f"Error parsing content for {url}: {e}")
         return []
     return links #return final list of discovered URLS to crawler
-
 
 def is_valid(url, blacklist, whitelist):
     #blacklist: a set of paths the crawler is not allowed to go into
@@ -209,19 +210,10 @@ def is_valid(url, blacklist, whitelist):
         print ("TypeError for ", url)
         return False
 
+def simhash(words1, words2):
+    # Count words
+    counts1 = computeWordFrequencies(words1)
+    counts2 = computeWordFrequencies(words2)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    # Hash the words
 

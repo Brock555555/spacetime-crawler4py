@@ -15,10 +15,11 @@ class Frontier(object):
         self.logger = get_logger("FRONTIER")
         self.config = config
         self.to_be_downloaded = list() # Primary queue -- Should be empty almost perpetually as new links get distributed immediately
+        self.thread_count = thread_count
 
         # Buckets for subdomains
         self.buckets = list() # Distributed queue
-        for i in range(thread_count):
+        for i in range(self.thread_count):
             self.buckets.append(list())
 
         # Check for save file and restart option
@@ -70,27 +71,36 @@ class Frontier(object):
         """
         Should be called each time a worker adds a set of urls to the frontier
         """
+
+        print(f"TO BE DOWNLOADED: {self.to_be_downloaded}")
+
         while self.to_be_downloaded:
             current_url = self.to_be_downloaded.pop()
-            domain = urlparse(current_url)
             bucket = None
 
-            print(f"DISTRIBUTION: {current_url}, {domain}")
-
+            # Parse domain
+            domain = urlparse(current_url)
             domain = domain.hostname.lower() if domain.hostname else ""
+            print(f"DISTRIBUTION: URL - {current_url}, Domain - {domain}")
 
             if not domain:
                 print("DISTRIBUTION ERROR: NO DOMAIN FROM PARSE")
             else:
-                for i in range(allowed_domains):
-                    if domain == allowed_domains[i]:
-                        bucket = self.buckets[i]
+                # cond = (domain == d or domain.endswith("." + d) for d in allowed_domains)
+
+                for i, allowed_domain in enumerate(allowed_domains):
+                    if domain == allowed_domain or domain.endswith("." + allowed_domain):
+                        bucket = self.buckets[i % self.thread_count]
                         break
 
-                if not bucket:
+                if bucket is None:
                     print("DISTRIBUTION ERROR: NO BUCKET FITTED")
                 else:
                     bucket.append(current_url)
+
+        print(self.buckets)
+        for i, bucket in enumerate(self.buckets):
+            print(f"Bucket {i}: {bucket}")
 
     def add_url(self, url):
         url = normalize(url)
