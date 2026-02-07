@@ -34,16 +34,19 @@ def extract_next_links(url, resp, site_map):
         return []
 
     unique = urldefrag(url)[0]
-    if unique in unique_urls:
-        return [] #already processed this content
-    unique_urls.add(unique)
+
+    with error_lock:   # reuse existing lock
+        if unique in unique_urls:
+            return []  # already processed
+        unique_urls.add(unique)
 
     links = []
     try:
         if site_map:
             #just add the site_map links, it will get parsed when the frontier reaches it later
             for site_map_url in site_map:
-                links.append(site_map_url)
+                clean = urldefrag(site_map_url)[0]
+                links.append(clean)
         
         #parse raw bytes of page content into soup obj
         if resp.url.endswith(".xml") or "application/xml" in resp.raw_response.headers.get("Content-Type", ""):
@@ -192,8 +195,12 @@ def is_valid(url, blacklist, whitelist):
         if len(url) > 200:
             return False #long urls usually traps
 
-
-       
+        if "/wiki/" in path:
+            return False
+        if "/cropped" in path:
+            return False
+        if "~epstein" in path:
+            return False
         
         if domain.startswith("wiki."):
             return False
@@ -233,7 +240,7 @@ def is_valid(url, blacklist, whitelist):
             r"|data|dat|exe|bz2|tar|tgz|xz|lzma|msi|bin|7z|7zip|psd|dmg|iso"
             r"|c|h|cpp|hpp|java|py|ipynb|sh|pl|rb|php|bat|ps1|Makefile|emacs"
             r"|epub|dll|cnf|cfg|conf|ini|thmx|mso|arff|rtf|jar|csv|log|md|txt|json|yaml|yml"
-            r"|rm|smil|wmv|swf|wma|zip|rar|gz|torrent|pem|crt|key|htm)$", parsed.path.lower())
+            r"|rm|smil|wmv|swf|wma|zip|rar|gz|torrent|pem|crt|key|htm|sql|shtml|png|jpg|img|html)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", url)

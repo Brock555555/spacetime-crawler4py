@@ -5,7 +5,7 @@ from utils.download import download
 from utils import get_logger
 import scraper
 import time
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urldefrag
 
 from crawler.frontier import lock
 from shared import error_urls, error_lock, unique_urls
@@ -115,12 +115,13 @@ class Worker(Thread):
     def run(self):
         while True:
             tbd_url = self.frontier.get_tbd_url()
+            tbd_url, _ = urldefrag(tbd_url)
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
             # Skip forbidden URLs
             with error_lock:
-                if tbd_url in error_urls:
+                if tbd_url in error_urls or tbd_url in unique_urls:
                     self.logger.info(f"Skipping forbidden URL {tbd_url}")
                     with lock:
                         self.frontier.mark_url_complete(tbd_url)
@@ -147,8 +148,7 @@ class Worker(Thread):
                     with lock:
                         self.frontier.mark_url_complete(tbd_url)
                     continue  # skip scraper, go to next URL
-                if tbd_url in unique_urls:
-                    continue
+               
                 scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
                 with lock:
                     for scraped_url in scraped_urls:
