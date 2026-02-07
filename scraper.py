@@ -64,9 +64,9 @@ def extract_next_links(url, resp, site_map):
 
         if len(words) < 50 and len(soup.find_all('a')) > 20: #detect low info content (avoids traps)
             return links
-            
 
-        if XML: 
+
+        if XML:
             for loc in soup.find_all("loc"):
                 links.append(loc.text)
         else:
