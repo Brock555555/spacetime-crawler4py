@@ -6,24 +6,17 @@ from lxml import etree
 from report import Report
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
-# 3. Finalize large-file avoidance:
+# Finish Report so we can turn in our data
+# . Finalize large-file avoidance:
 #    - either add Content-Length heuristic
 #    - or document why extension + content filters suffice
-# 4. (OPTIONAL|FOR DEBUGGING) Data structure to store webpage content - think document data store
 # 5. Handle Ctrl+C KeyboardException
-# 6. Clean up code (reorganize, move things to where they go (scraper vs. worker vs. report), documentation, etc)
-
-#--------------Report stuff----------------------- <- getting moved to report.py
-# 1. Unique pages counted after fragment removal
-# 2. Top 50 words sorted by frequency
-# 3. Subdomains sorted alphabetically
-# 4. Subdomain counts are unique pages per subdomain, not raw visits
-# 5. Stopwords explicitly mentioned in report
 
 #----------------Extra Credit stuff, to be done if we have time-----------------
 # 1. Implement exact and near webpage similarity detection
 # 2. Make the crawler multithreaded.
 
+#these two here are NOT thread safe
 unique_urls = set() # can still include for now? this currently prevents us from running duplicate urls
 error_urls = set() #will never add a url of this set again # TODO: Move this into worker (to make it persistent) and make sure worker doesn't use the error URLS as well (those that returned error status)
 
