@@ -8,8 +8,9 @@ import time
 from urllib.parse import urlparse
 
 from crawler.frontier import lock
-
+from shared import error_urls, error_lock
 class Worker(Thread):
+
     robots_cache = {} #for checking already seen robots files info dict[str, dict]
     seen_robots = set() #for already downloaded files seen_robots = {"https://ics.uci.edu", "https://cs.uci.edu", "https://informatics.uci.edu",}
     robots_lock = Lock()
@@ -117,6 +118,13 @@ class Worker(Thread):
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
+            # Skip forbidden URLs
+            with error_lock:
+                if tbd_url in error_urls:
+                    self.logger.info(f"Skipping forbidden URL {tbd_url}")
+                    with lock:
+                        self.frontier.mark_url_complete(tbd_url)
+                    continue
             #check robots
             parsed = urlparse(tbd_url)
             domain = f"{parsed.scheme}://{parsed.netloc}"
@@ -133,7 +141,13 @@ class Worker(Thread):
                 self.logger.info(
                     f"Downloaded {tbd_url}, status <{resp.status}>, "
                     f"using cache {self.config.cache_server}.")
-
+                if resp.status == 403:
+                    self.logger.warning(f"Adding {tbd_url} to forbidden_urls (403)")
+                    with error_lock:
+                        error_urls.add(tbd_url)
+                    with lock:
+                        self.frontier.mark_url_complete(tbd_url)
+                    continue  # skip scraper, go to next URL
                 scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
                 with lock:
                     for scraped_url in scraped_urls:
