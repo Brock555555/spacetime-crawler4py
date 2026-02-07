@@ -1,8 +1,6 @@
 import re
-from urllib.parse import urlparse, urldefrag, urljoin
+from urllib.parse import urlparse, urldefrag, urljoin, parse_qs, urlencode, urlunparse
 from bs4 import BeautifulSoup
-from collections import Counter
-from lxml import etree
 from hashlib import md5
 
 from PartA import computeWordFrequencies

@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timedelta
 
-LOG_PATH = "worker.log.txt"   # change to your actual log filename
+LOG_PATH = "Worker.log"   # change to your actual log filename
 MIN_DELAY_MS = 500
 
 # Example line:
