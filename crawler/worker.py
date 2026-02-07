@@ -122,10 +122,10 @@ class Worker(Thread):
             # Check for a new URL to process
             with frontier_lock:
                 tbd_url = self.frontier.get_tbd_url(self.worker_id)
-                tbd_url, _ = urldefrag(tbd_url)
 
                 # Do this while holding the lock
                 if tbd_url is not None:
+                    tbd_url, _ = urldefrag(tbd_url)
                     self.frontier.active_workers += 1
                 else:
                     # Check if finished crawling
