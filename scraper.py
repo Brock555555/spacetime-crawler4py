@@ -88,6 +88,26 @@ def extract_next_links(url, resp, site_map):
     return links #return final list of discovered URLS to crawler
 
 
+def normalize_url(url: str) -> str:
+    """Remove ephemeral query parameters that don't change main page content."""
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+
+    # Remove parameters that change frequently
+    for key in ["version", "format", "action"]:
+        qs.pop(key, None)
+
+    new_query = urlencode(qs, doseq=True)
+    normalized = urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        parsed.path,
+        parsed.params,
+        new_query,
+        parsed.fragment
+    ))
+    return urldefrag(normalized)[0]  # remove fragment
+
 def is_valid(url, blacklist, whitelist):
     #blacklist: a set of paths the crawler is not allowed to go into
     #whitelist: a set of paths the crawler is allowed into from disallowed paths
@@ -133,6 +153,13 @@ def is_valid(url, blacklist, whitelist):
 
         #avoid malformed URL patterns seen in logs
         if '"' in path or "\\" in path:
+            return False
+        
+        # Filter out timeline pages
+        if "/timeline" in path:
+            return False
+        
+        if path.startswith("/wiki/") and "version=" in query:
             return False
         
         #add ml or dataset check
