@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from collections import Counter
 from lxml import etree
 from report import Report
+from shared import error_lock, error_lock
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
 # Finish Report so we can turn in our data
@@ -18,7 +19,6 @@ from report import Report
 
 #these two here are NOT thread safe
 unique_urls = set() # can still include for now? this currently prevents us from running duplicate urls
-error_urls = set() #will never add a url of this set again # TODO: Move this into worker (to make it persistent) and make sure worker doesn't use the error URLS as well (those that returned error status)
 
 def scraper(url, resp, blacklist, whitelist, site_map):
     #print(blacklist, whitelist, site_map)
@@ -31,7 +31,8 @@ def extract_next_links(url, resp, site_map):
 
     #only process successful 200 OK responses
     if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:#further error checking
-        error_urls.add(url)
+        with error_lock:
+            error_urls.add(url)
         return []
 
     unique = urldefrag(url)[0]
@@ -96,8 +97,9 @@ def is_valid(url, blacklist, whitelist):
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
-        if url in error_urls:
-            return False #dont do any further checking
+        with error_lock:
+            if url in error_urls:
+                return False #dont do any further checking
 
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"}:
