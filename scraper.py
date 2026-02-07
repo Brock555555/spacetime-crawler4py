@@ -6,8 +6,6 @@ from lxml import etree
 from report import Report
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
-# 1. add sitemap links from sitemap parameter
-# 2. Verify USERAGENT is correct and crawler runs during deployment period
 # 3. Finalize large-file avoidance:
 #    - either add Content-Length heuristic
 #    - or document why extension + content filters suffice
@@ -26,29 +24,7 @@ from report import Report
 # 1. Implement exact and near webpage similarity detection
 # 2. Make the crawler multithreaded.
 
-# I need to check insite.ics.uci.edu's robots.txt file to determine if its working correctly
-
-word_count = Counter()
-subdomainCount = Counter()
-unique_urls = set() # TODO: still need to do
-max_words = 0
-longest_page_url = ""
-stopwords = set("""
-a about above after again against all am an and any are aren't as at be because 
-been before being below between both but by can't cannot could couldn't did 
-didn't do does doesn't doing don't down during each few for from further had 
-hadn't has hasn't have haven't having he he'd he'll he's her here here's hers 
-herself him himself his how how's i i'd i'll i'm i've if in into is isn't it 
-it's its itself let's me more most mustn't my myself no nor not of off on once 
-only or other ought our ours ourselves out over own same shan't she she'd she'll 
-she's should shouldn't so some such than that that's the their theirs them 
-themselves then there there's these they they'd they'll they're they've this 
-those through to too under until up very was wasn't we we'd we'll we're we've 
-were weren't what what's when when's where where's which while who who's whom 
-why why's with won't would wouldn't you you'd you'll you're you've your yours 
-yourself yourselves
-""".split())
-
+unique_urls = set() # can still include for now? this currently prevents us from running duplicate urls
 error_urls = set() #will never add a url of this set again # TODO: Move this into worker (to make it persistent) and make sure worker doesn't use the error URLS as well (those that returned error status)
 
 def scraper(url, resp, blacklist, whitelist, site_map):
@@ -57,13 +33,7 @@ def scraper(url, resp, blacklist, whitelist, site_map):
     return [link for link in links if is_valid(link, blacklist, whitelist)]
 
 def extract_next_links(url, resp, site_map):
-    #blacklist: a set of paths the crawler is not allowed to go into
-    #whitelist: a set of paths the crawler is only allowed into
     # site_map, a set of more links from robots
-    global word_count
-    global max_words
-    global longest_page_url
-    global subdomainCount
     XML = False
 
     #only process successful 200 OK responses
@@ -75,14 +45,6 @@ def extract_next_links(url, resp, site_map):
     if unique in unique_urls:
         return [] #already processed this content
     unique_urls.add(unique)
-    
-    #break URL into components (scheme, netloc, path, etc) to isolate domain
-    parsed_url = urlparse(unique)
-    #get network loc and convert to lowercase for consistency
-    host = parsed_url.netloc.lower()
-    #check if host belongs to ICS domain
-    if host.endswith(".uci.edu"):        
-        subdomainCount[host]+=1
 
     links = []
     try:
@@ -108,26 +70,10 @@ def extract_next_links(url, resp, site_map):
         #[a-zA-Z0-9]+: ignores symbols
 
         if len(words) < 50 and len(soup.find_all('a')) > 20: #detect low info content (avoids traps)
-            return []
-            
-        count = len(words)
-        if count > max_words:
-            max_words = count
-            longest_page_url = unique
+            return links
 
-        #keep word if not stop word and len > 1
-        """
-        Filtering for words with a length greater than one removes "noise" like single-character 
-        artifacts, initials, math symbols, etc that don't carry meaningful information about the page content.
-        """
-        # TODO: Move this to report.py
-        filtered_words = []
-        for i in words:
-            if i not in stopwords:  #took away and len(i) > 1
-                filtered_words.append(i)
-        word_count.update(filtered_words)
 
-        if XML: #needs further testing to see if it gets all of them
+        if XML:
             for loc in soup.find_all("loc"):
                 links.append(loc.text)
         else:
