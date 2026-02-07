@@ -5,9 +5,10 @@ from utils.download import download
 from utils import get_logger
 import scraper
 import time
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urldefrag
 
 from crawler.frontier import frontier_lock
+from shared import error_urls, error_lock, unique_urls
 
 class Worker(Thread):
     robots_cache = {} #for checking already seen robots files info dict[str, dict]
@@ -51,7 +52,9 @@ class Worker(Thread):
                 text = resp.raw_response.content.decode("utf-8", errors="ignore")
                 for line in text.splitlines():
                     if line.startswith("Sitemap: "):
-                        link = line[9:]
+                        link = line[9:].strip().lower()
+                        if any(x in link for x in ["image", "img", "media", "video", "photo"]):
+                            continue
                         Site_map_links.add(link)
                         continue
                     if line.startswith("User-agent: "):
@@ -119,6 +122,7 @@ class Worker(Thread):
             # Check for a new URL to process
             with frontier_lock:
                 tbd_url = self.frontier.get_tbd_url(self.worker_id)
+                tbd_url, _ = urldefrag(tbd_url)
 
                 # Do this while holding the lock
                 if tbd_url is not None:
@@ -132,6 +136,16 @@ class Worker(Thread):
 
                     # If not finished crawling, wait for condition to change
                     self.frontier.condition.wait()
+
+            # Skip forbidden URLs
+            with error_lock:
+                if tbd_url in error_urls or tbd_url in unique_urls:
+                    self.logger.info(f"Skipping forbidden URL {tbd_url}")
+                    with frontier_lock:
+                        self.frontier.mark_url_complete(tbd_url)
+                        self.frontier.active_workers -= 1
+                        self.frontier.condition.notify_all()
+                    continue
 
             # If there is a URL to process
             if tbd_url is not None:
@@ -155,6 +169,15 @@ class Worker(Thread):
                     self.logger.info(
                         f"Downloaded {tbd_url}, status <{resp.status}>, "
                         f"using cache {self.config.cache_server}.")
+
+                    if resp.status != 200:
+                        with error_lock:
+                            error_urls.add(tbd_url)
+                        with frontier_locklock:
+                            self.frontier.mark_url_complete(tbd_url)
+                            self.frontier.active_workers -= 1
+                            self.frontier.condition.notify_all()
+                        continue  # skip scraper, go to next URL
 
                     scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
                     with frontier_lock:
