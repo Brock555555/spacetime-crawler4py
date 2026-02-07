@@ -3,6 +3,7 @@ from urllib.parse import urlparse, urldefrag, urljoin
 from bs4 import BeautifulSoup
 from collections import Counter
 from lxml import etree
+from hashlib import md5
 
 from PartA import computeWordFrequencies
 from report import Report
@@ -210,10 +211,23 @@ def is_valid(url, blacklist, whitelist):
         print ("TypeError for ", url)
         return False
 
-def simhash(words1, words2):
-    # Count words
-    counts1 = computeWordFrequencies(words1)
-    counts2 = computeWordFrequencies(words2)
-
-    # Hash the words
-
+# # TODO: Is this the right place to put this function?
+# def simhash(words1, words2):
+#     hashes1 = []
+#     hashes2 = []
+#
+#     # Count words
+#     counts1 = computeWordFrequencies(words1)
+#     counts2 = computeWordFrequencies(words2)
+#
+#     # Hash the words
+#     for word in words1:
+#         binary_hash = md5(word.encode()).digest()
+#
+#         # TODO: Insert XOR business here
+#
+#         hashes1.append(binary_hash)
+#
+#     # TODO: Repeat for words2
+#     for word in words2:
+#         md5(word.encode()).digest()

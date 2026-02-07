@@ -36,6 +36,7 @@ class Frontier(object):
 
         # Load existing save file, or create one if it does not exist.
         self.save = shelve.open(self.config.save_file)
+
         if restart:
             for url in self.config.seed_urls:
                 self.add_url(url)
@@ -67,6 +68,18 @@ class Frontier(object):
         except IndexError:
             return None
 
+    def is_empty(self):
+        empty = True
+        if self.to_be_downloaded:
+            empty = False
+
+        if empty:
+            for bucket in self.buckets:
+                if len(bucket) != 0:
+                    empty = False
+
+        return empty
+
     def distribute_urls(self):
         """
         Should be called each time a worker adds a set of urls to the frontier
@@ -86,8 +99,6 @@ class Frontier(object):
             if not domain:
                 print("DISTRIBUTION ERROR: NO DOMAIN FROM PARSE")
             else:
-                # cond = (domain == d or domain.endswith("." + d) for d in allowed_domains)
-
                 for i, allowed_domain in enumerate(allowed_domains):
                     if domain == allowed_domain or domain.endswith("." + allowed_domain):
                         bucket = self.buckets[i % self.thread_count]

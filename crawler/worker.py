@@ -115,32 +115,36 @@ class Worker(Thread):
         while True:
             with frontier_lock:
                 tbd_url = self.frontier.get_tbd_url(self.worker_id)
-            if not tbd_url:
-                self.logger.info("Frontier is empty. Stopping Crawler.")
-                break
-            #check robots
-            parsed = urlparse(tbd_url)
-            domain = f"{parsed.scheme}://{parsed.netloc}"
-            
-            # Only download robots.txt once per domain/subdomain
-            robots_info = self.get_robots_info(domain)
-            Allowed = robots_info["allowed"]
-            Blacklisted = robots_info["blacklist"]
-            Whitelisted = robots_info["whitelist"]
-            Site_map = robots_info["sitemap_links"]
 
-            if Allowed:
-                resp = download(tbd_url, self.config, self.logger)
-                self.logger.info(
-                    f"Downloaded {tbd_url}, status <{resp.status}>, "
-                    f"using cache {self.config.cache_server}.")
+                if self.frontier.is_empty():
+                    self.logger.info("Frontier is empty. Stopping Crawler.")
+                    break
 
-                scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
+            time.sleep(self.config.time_delay) # Sleep regardless of whether bucket was empty
+
+            if tbd_url is not None:
+                #check robots
+                parsed = urlparse(tbd_url)
+                domain = f"{parsed.scheme}://{parsed.netloc}"
+
+                # Only download robots.txt once per domain/subdomain
+                robots_info = self.get_robots_info(domain)
+                Allowed = robots_info["allowed"]
+                Blacklisted = robots_info["blacklist"]
+                Whitelisted = robots_info["whitelist"]
+                Site_map = robots_info["sitemap_links"]
+
+                if Allowed:
+                    resp = download(tbd_url, self.config, self.logger)
+                    self.logger.info(
+                        f"Downloaded {tbd_url}, status <{resp.status}>, "
+                        f"using cache {self.config.cache_server}.")
+
+                    scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
+                    with frontier_lock:
+                        for scraped_url in scraped_urls:
+                            self.frontier.add_url(scraped_url)
+                        self.frontier.distribute_urls()
+
                 with frontier_lock:
-                    for scraped_url in scraped_urls:
-                        self.frontier.add_url(scraped_url)
-                    self.frontier.distribute_urls()
-
-            with frontier_lock:
-                self.frontier.mark_url_complete(tbd_url)
-            time.sleep(self.config.time_delay)
+                    self.frontier.mark_url_complete(tbd_url)
