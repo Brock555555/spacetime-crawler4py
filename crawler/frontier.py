@@ -100,7 +100,7 @@ class Frontier(object):
             # Parse domain
             domain = urlparse(current_url)
             domain = domain.hostname.lower() if domain.hostname else ""
-            print(f"DISTRIBUTION: URL - {current_url}, Domain - {domain}")
+            # print(f"DISTRIBUTION: URL - {current_url}, Domain - {domain}")
 
             if not domain:
                 print("DISTRIBUTION ERROR: NO DOMAIN FROM PARSE")
@@ -116,8 +116,8 @@ class Frontier(object):
                     bucket.append(current_url)
 
         # print(self.buckets)
-        for i, bucket in enumerate(self.buckets):
-            print(f"Bucket {i}: {len(bucket)}")
+        # for i, bucket in enumerate(self.buckets):
+        #     print(f"Bucket {i}: {len(bucket)}")
 
     def add_url(self, url):
         """
