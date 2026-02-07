@@ -19,9 +19,18 @@ class Crawler(object):
             worker.start()
 
     def start(self):
-        self.start_async()
-        self.join()
-        Report.aggregate_reports()
+        try:
+            self.start_async()
+            self.join()
+            Report.aggregate_reports()
+            Report.write_results()
+        except KeyboardInterrupt:
+            print("Crawler interrupted. Aggregating reports...")
+
+        finally:
+            # Always aggregate whatever is in the report queue
+            Report.aggregate_reports()
+            Report.write_results("report_interrupted_run.txt")
 
     def join(self):
         for worker in self.workers:
