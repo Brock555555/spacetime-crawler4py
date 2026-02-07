@@ -7,7 +7,7 @@ import scraper
 import time
 from urllib.parse import urlparse
 
-from crawler.frontier import lock
+from crawler.frontier import frontier_lock
 
 class Worker(Thread):
     robots_cache = {} #for checking already seen robots files info dict[str, dict]
@@ -17,6 +17,7 @@ class Worker(Thread):
         self.logger = get_logger(f"Worker-{worker_id}", "Worker")
         self.config = config
         self.frontier = frontier
+        self.worker_id = worker_id
         # basic check for requests in scraper
         assert {getsource(scraper).find(req) for req in {"from requests import", "import requests"}} == {-1}, "Do not use requests in scraper.py"
         assert {getsource(scraper).find(req) for req in {"from urllib.request import", "import urllib.request"}} == {-1}, "Do not use urllib.request in scraper.py"
@@ -94,7 +95,6 @@ class Worker(Thread):
                 "sitemap_links": result[3],}
         return result
 
-
     def get_robots_info(self, domain):
         with Worker.robots_lock:
             need_download = domain not in Worker.seen_robots
@@ -113,7 +113,8 @@ class Worker(Thread):
 
     def run(self):
         while True:
-            tbd_url = self.frontier.get_tbd_url()
+            with frontier_lock:
+                tbd_url = self.frontier.get_tbd_url(self.worker_id)
             if not tbd_url:
                 self.logger.info("Frontier is empty. Stopping Crawler.")
                 break
@@ -135,10 +136,11 @@ class Worker(Thread):
                     f"using cache {self.config.cache_server}.")
 
                 scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
-                with lock:
+                with frontier_lock:
                     for scraped_url in scraped_urls:
                         self.frontier.add_url(scraped_url)
+                    self.frontier.distribute_urls()
 
-            with lock:
+            with frontier_lock:
                 self.frontier.mark_url_complete(tbd_url)
             time.sleep(self.config.time_delay)

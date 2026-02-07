@@ -4,16 +4,23 @@ import shelve
 from threading import Thread, Lock
 from queue import Queue, Empty
 
+from crawler import Crawler
 from utils import get_logger, get_urlhash, normalize
-from scraper import is_valid
+from urllib.parse import urlparse
+from scraper import is_valid, allowed_domains
 
-lock = Lock()
+frontier_lock = Lock()
 
 class Frontier(object):
-    def __init__(self, config, restart):
+    def __init__(self, config, restart, thread_count):
         self.logger = get_logger("FRONTIER")
         self.config = config
-        self.to_be_downloaded = list()
+        self.to_be_downloaded = list() # Primary queue -- Should be empty almost perpetually as new links get distributed immediately
+
+        # Buckets for subdomains
+        self.buckets = list() # Distributed queue
+        for i in range(thread_count):
+            self.buckets.append(list())
 
         # Check for save file and restart option
         if not os.path.exists(self.config.save_file) and not restart:
@@ -51,11 +58,38 @@ class Frontier(object):
             f"Found {tbd_count} urls to be downloaded from {total_count} "
             f"total urls discovered.")
 
-    def get_tbd_url(self):
+    def get_tbd_url(self, worker_id):
         try:
-            return self.to_be_downloaded.pop()
+            # return self.to_be_downloaded.pop()
+            return self.buckets[worker_id].pop()
         except IndexError:
             return None
+
+    def distribute_urls(self):
+        """
+        Should be called each time a worker adds a set of urls to the frontier
+        """
+        while self.to_be_downloaded:
+            current_url = self.to_be_downloaded.pop()
+            domain = urlparse(current_url)
+            bucket = None
+
+            print(f"DISTRIBUTION: {current_url}, {domain}")
+
+            domain = domain.hostname.lower() if domain.hostname else ""
+
+            if not domain:
+                print("DISTRIBUTION ERROR: NO DOMAIN FROM PARSE")
+            else:
+                for i in range(allowed_domains):
+                    if domain == allowed_domains[i]:
+                        bucket = self.buckets[i]
+                        break
+
+                if not bucket:
+                    print("DISTRIBUTION ERROR: NO BUCKET FITTED")
+                else:
+                    bucket.append(current_url)
 
     def add_url(self, url):
         url = normalize(url)

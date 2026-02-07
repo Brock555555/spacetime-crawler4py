@@ -19,6 +19,7 @@ from report import Report
 #these two here are NOT thread safe
 unique_urls = set() # can still include for now? this currently prevents us from running duplicate urls
 error_urls = set() #will never add a url of this set again # TODO: Move this into worker (to make it persistent) and make sure worker doesn't use the error URLS as well (those that returned error status)
+allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"}
 
 def scraper(url, resp, blacklist, whitelist, site_map):
     #print(blacklist, whitelist, site_map)
@@ -105,7 +106,6 @@ def is_valid(url, blacklist, whitelist):
         #domain parsing here, 
         #from urlparse documentation scheme://netloc/path;parameters?query#fragment.
         #from slides scheme://domain:port/path?query_string#fragment_id
-        allowed_domains = {"ics.uci.edu", "cs.uci.edu", "informatics.uci.edu", "stat.uci.edu"}
         domain = parsed.hostname.lower() if parsed.hostname else "" #returns the entire domain, does not include the /before path, this does however include www.
         #domain should already be lowercase
         
@@ -164,9 +164,6 @@ def is_valid(url, blacklist, whitelist):
                 return False
         if len(url) > 200:
             return False #long urls usually traps
-
-
-       
         
         if domain.startswith("wiki."):
             return False
