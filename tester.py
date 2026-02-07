@@ -172,10 +172,11 @@ class Test_report(unittest.TestCase):
         report.run()
         Report.aggregate_reports()
         print("Unique pages:", Report.unique_pages)
-        print("Longest page URL:", Report.max_page)
-        print("Longest page length:", Report.max_length)
+        print("Longest page URL:", Report.longest_page)
+        print("Longest page length:", Report.longest_length)
         print("Top 50 words:", Report.top_50_words)
         print("Word frequencies:", Report.combined_word_frequencies)
+        report.write_results("test_report.txt")
 
 if __name__ == "__main__":
     unittest.main()
