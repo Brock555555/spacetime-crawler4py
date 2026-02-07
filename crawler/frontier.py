@@ -91,7 +91,7 @@ class Frontier(object):
         Should be called each time a worker adds a set of urls to the frontier
         """
 
-        print(f"TO BE DOWNLOADED: {self.to_be_downloaded}")
+        # print(f"TO BE DOWNLOADED: {self.to_be_downloaded}")
 
         while self.to_be_downloaded:
             current_url = self.to_be_downloaded.pop()
@@ -100,7 +100,7 @@ class Frontier(object):
             # Parse domain
             domain = urlparse(current_url)
             domain = domain.hostname.lower() if domain.hostname else ""
-            print(f"DISTRIBUTION: URL - {current_url}, Domain - {domain}")
+            # print(f"DISTRIBUTION: URL - {current_url}, Domain - {domain}")
 
             if not domain:
                 print("DISTRIBUTION ERROR: NO DOMAIN FROM PARSE")
@@ -116,8 +116,8 @@ class Frontier(object):
                     bucket.append(current_url)
 
         # print(self.buckets)
-        for i, bucket in enumerate(self.buckets):
-            print(f"Bucket {i}: {len(bucket)}")
+        # for i, bucket in enumerate(self.buckets):
+        #     print(f"Bucket {i}: {len(bucket)}")
 
     def add_url(self, url):
         """
