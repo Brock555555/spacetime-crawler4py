@@ -4,7 +4,6 @@ import shelve
 from threading import Thread, Lock
 from queue import Queue, Empty
 
-from crawler import Crawler
 from utils import get_logger, get_urlhash, normalize
 from urllib.parse import urlparse
 from scraper import is_valid, allowed_domains
@@ -39,12 +38,14 @@ class Frontier(object):
         if restart:
             for url in self.config.seed_urls:
                 self.add_url(url)
+            self.distribute_urls()
         else:
             # Set the frontier state with contents of save file.
             self._parse_save_file()
             if not self.save:
                 for url in self.config.seed_urls:
                     self.add_url(url)
+                self.distribute_urls()
 
     def _parse_save_file(self):
         ''' This function can be overridden for alternate saving techniques. '''
