@@ -8,7 +8,7 @@ import time
 from urllib.parse import urlparse
 
 from crawler.frontier import lock
-from shared import error_urls, error_lock
+from shared import error_urls, error_lock, unique_urls
 class Worker(Thread):
 
     robots_cache = {} #for checking already seen robots files info dict[str, dict]
@@ -141,13 +141,14 @@ class Worker(Thread):
                 self.logger.info(
                     f"Downloaded {tbd_url}, status <{resp.status}>, "
                     f"using cache {self.config.cache_server}.")
-                if resp.status == 403:
-                    self.logger.warning(f"Adding {tbd_url} to forbidden_urls (403)")
+                if resp.status != 200:
                     with error_lock:
                         error_urls.add(tbd_url)
                     with lock:
                         self.frontier.mark_url_complete(tbd_url)
                     continue  # skip scraper, go to next URL
+                if tbd_url in unique_urls:
+                    continue
                 scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
                 with lock:
                     for scraped_url in scraped_urls:

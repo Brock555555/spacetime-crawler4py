@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from collections import Counter
 from lxml import etree
 from report import Report
-from shared import error_urls, error_lock
+from shared import error_urls, error_lock, unique_urls
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
 # Finish Report so we can turn in our data
@@ -18,8 +18,6 @@ from shared import error_urls, error_lock
 # 2. Make the crawler multithreaded.
 
 #these two here are NOT thread safe
-unique_urls = set() # can still include for now? this currently prevents us from running duplicate urls
-
 def scraper(url, resp, blacklist, whitelist, site_map):
     #print(blacklist, whitelist, site_map)
     links = extract_next_links(url, resp, site_map)
