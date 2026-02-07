@@ -142,6 +142,10 @@ def is_valid(url, blacklist, whitelist):
         if any(keyword in path for keyword in dataset_keywords):
             return False
 
+        low_value_keywords = ("/wiki/", "/cropped", "~epstein/pix")
+        if any(keyword in path for keyword in low_value_keywords):
+            return False
+
         #updated whitelist vs blacklist logic so that it will check specific paths
         for bl in blacklist:
             if path.startswith(bl):
