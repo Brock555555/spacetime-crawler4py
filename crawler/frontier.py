@@ -1,7 +1,7 @@
 import os
 import shelve
 
-from threading import Thread, Lock
+from threading import Thread, Lock, Condition
 from queue import Queue, Empty
 
 from utils import get_logger, get_urlhash, normalize
@@ -16,6 +16,8 @@ class Frontier(object):
         self.config = config
         self.to_be_downloaded = list() # Primary queue -- Should be empty almost perpetually as new links get distributed immediately
         self.thread_count = thread_count
+        self.active_workers = 0
+        self.condition = Condition(frontier_lock)
 
         # Buckets for subdomains
         self.buckets = list() # Distributed queue
@@ -38,16 +40,20 @@ class Frontier(object):
         self.save = shelve.open(self.config.save_file)
 
         if restart:
-            for url in self.config.seed_urls:
-                self.add_url(url)
-            self.distribute_urls()
+            with frontier_lock:
+                for url in self.config.seed_urls:
+                    self.add_url(url)
+                self.condition.notify_all()
+                self.distribute_urls()
         else:
             # Set the frontier state with contents of save file.
             self._parse_save_file()
             if not self.save:
-                for url in self.config.seed_urls:
-                    self.add_url(url)
-                self.distribute_urls()
+                with frontier_lock:
+                    for url in self.config.seed_urls:
+                        self.add_url(url)
+                    self.condition.notify_all()
+                    self.distribute_urls()
 
     def _parse_save_file(self):
         ''' This function can be overridden for alternate saving techniques. '''
@@ -109,11 +115,14 @@ class Frontier(object):
                 else:
                     bucket.append(current_url)
 
-        print(self.buckets)
+        # print(self.buckets)
         for i, bucket in enumerate(self.buckets):
-            print(f"Bucket {i}: {bucket}")
+            print(f"Bucket {i}: {len(bucket)}")
 
     def add_url(self, url):
+        """
+        !!! NOTE: MUST CALL "self.frontier.condition.notify_all()" after this function while holding frontier_lock !!!
+        """
         url = normalize(url)
         urlhash = get_urlhash(url)
         if urlhash not in self.save:
