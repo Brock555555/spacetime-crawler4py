@@ -7,6 +7,7 @@ from hashlib import md5
 
 from PartA import computeWordFrequencies
 from report import Report
+from shared import error_urls, error_lock, unique_urls
 
 #------------------LIST OF THINGS LEFT TO DO-------------------------------- In order of importance
 # Finish Report so we can turn in our data
@@ -35,20 +36,24 @@ def extract_next_links(url, resp, site_map):
 
     #only process successful 200 OK responses
     if resp.status != 200 or not resp.raw_response or not resp.raw_response.content:#further error checking
-        error_urls.add(url)
+        with error_lock:
+            error_urls.add(url)
         return []
 
     unique = urldefrag(url)[0]
-    if unique in unique_urls:
-        return [] #already processed this content
-    unique_urls.add(unique)
+
+    with error_lock:   # reuse existing lock
+        if unique in unique_urls:
+            return []  # already processed
+        unique_urls.add(unique)
 
     links = []
     try:
         if site_map:
             #just add the site_map links, it will get parsed when the frontier reaches it later
             for site_map_url in site_map:
-                links.append(site_map_url)
+                clean = urldefrag(site_map_url)[0]
+                links.append(clean)
         
         #parse raw bytes of page content into soup obj
         if resp.url.endswith(".xml") or "application/xml" in resp.raw_response.headers.get("Content-Type", ""):
@@ -92,6 +97,27 @@ def extract_next_links(url, resp, site_map):
         return []
     return links #return final list of discovered URLS to crawler
 
+
+def normalize_url(url: str) -> str:
+    """Remove ephemeral query parameters that don't change main page content."""
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+
+    # Remove parameters that change frequently
+    for key in ["version", "format", "action"]:
+        qs.pop(key, None)
+
+    new_query = urlencode(qs, doseq=True)
+    normalized = urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        parsed.path,
+        parsed.params,
+        new_query,
+        parsed.fragment
+    ))
+    return urldefrag(normalized)[0]  # remove fragment
+
 def is_valid(url, blacklist, whitelist):
     #blacklist: a set of paths the crawler is not allowed to go into
     #whitelist: a set of paths the crawler is allowed into from disallowed paths
@@ -99,8 +125,9 @@ def is_valid(url, blacklist, whitelist):
     # If you decide to crawl it, return True; otherwise return False.
     # There are already some conditions that return False.
     try:
-        if url in error_urls:
-            return False #dont do any further checking
+        with error_lock:
+            if url in error_urls:
+                return False #dont do any further checking
 
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"}:
@@ -136,7 +163,14 @@ def is_valid(url, blacklist, whitelist):
         #avoid malformed URL patterns seen in logs
         if '"' in path or "\\" in path:
             return False
-        
+
+        # Filter out timeline pages
+        if "/timeline" in path:
+            return False
+
+        if path.startswith("/wiki/") and "version=" in query:
+            return False
+
         #add ml or dataset check
         dataset_keywords = ("/data/", "/dataset/", "/downloads/")
         if any(keyword in path for keyword in dataset_keywords):
@@ -166,6 +200,13 @@ def is_valid(url, blacklist, whitelist):
                 return False
         if len(url) > 200:
             return False #long urls usually traps
+
+        if "/wiki/" in path:
+            return False
+        if "/cropped" in path:
+            return False
+        if "~epstein" in path:
+            return False
         
         if domain.startswith("wiki."):
             return False
@@ -205,7 +246,7 @@ def is_valid(url, blacklist, whitelist):
             r"|data|dat|exe|bz2|tar|tgz|xz|lzma|msi|bin|7z|7zip|psd|dmg|iso"
             r"|c|h|cpp|hpp|java|py|ipynb|sh|pl|rb|php|bat|ps1|Makefile|emacs"
             r"|epub|dll|cnf|cfg|conf|ini|thmx|mso|arff|rtf|jar|csv|log|md|txt|json|yaml|yml"
-            r"|rm|smil|wmv|swf|wma|zip|rar|gz|torrent|pem|crt|key|htm)$", parsed.path.lower())
+            r"|rm|smil|wmv|swf|wma|zip|rar|gz|torrent|pem|crt|key|htm|sql|shtml|png|jpg|img|html)$", parsed.path.lower())
 
     except TypeError:
         print ("TypeError for ", url)
