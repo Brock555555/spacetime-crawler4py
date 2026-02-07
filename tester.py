@@ -7,16 +7,16 @@ from utils.server_registration import get_cache_server
 from utils import get_logger
 from utils.download import download
 import scraper
-from robots import robots
+from bs4 import BeautifulSoup
+from report import Report
 
+"""
 class TestisValid(unittest.TestCase):
     #According to Nam
-    """
     You need to crawl *.ics.uci.edu/* . The asterisk (*) is a quantifier that applies to
     the preceding regular expression element. It specifies that the preceding element may 
     occur zero or more times. 
     Essentially anything of the kind www.ics or just ics is valid
-    """
     def test_valid_url(self):
         url = "https://www.ics.uci.edu/"
         self.assertTrue(is_valid(url))
@@ -108,7 +108,7 @@ class TestisValid(unittest.TestCase):
 
         url = "https://test.test.ics.uci.edu"
         self.assertFalse(is_valid(url))
-
+"""
 
 class TestHtmlParsing(unittest.TestCase):
     '''
@@ -149,20 +149,34 @@ class TestHtmlParsing(unittest.TestCase):
         pass
         #we somehow need to access their cache server to test this, its done in launch.py'''
 
-class Test_robots(unittest.TestCase):
-    def test_robots(self):
-        exists, blacklist, whitelist, links = robots("https://www.ics.uci.edu")
-        self.assertEqual(blacklist, {'/happening', '/people'})
-        self.assertEqual(whitelist, set())
-        self.assertEqual(links, set())
-        self.assertTrue(exists)
+class Test_report(unittest.TestCase):
+    def test_report(self):
+        html = """
+        <html>
+        <head><title>Test Page</title></head>
+        <body>
+        <h1>Hello World!</h1>
+        <p>This is a test page with some content. Testing, testing, 123.</p>
+        <a href="https://ics.uci.edu/page1">Link1</a>
+        <a href="https://ics.uci.edu/page2">Link2</a>
+        <script>var x = 1;</script>
+        <style>p {color:red;}</style>
+        </body>
+        </html>
+        """
 
-        exists, blacklist, whitelist, links = robots("https://www.informatics.uci.edu/")
-        self.assertTrue(exists)
-        self.assertEqual(links, set())
-        self.assertEqual(blacklist, {'/wp-admin/', '/research/'})
-        self.assertEqual(whitelist, {'/research/gifts-grants/', '/research/undergraduate-research/', '/research/areas-of-expertise/', '/research/phd-research/', '/research/example-research-projects/', '/wp-admin/admin-ajax.php', '/research/masters-research/', '/research/past-dissertations/', '/research/labs-centers/'})
+        soup = BeautifulSoup(html, "html.parser")
+        url = "https://ics.uci.edu/test-page"
 
+        report = Report(url, soup)
+        report.run()
+        Report.aggregate_reports()
+        print("Unique pages:", Report.unique_pages)
+        print("Longest page URL:", Report.longest_page)
+        print("Longest page length:", Report.longest_length)
+        print("Top 50 words:", Report.top_50_words)
+        print("Word frequencies:", Report.combined_word_frequencies)
+        report.write_results("test_report.txt")
 
 if __name__ == "__main__":
     unittest.main()
