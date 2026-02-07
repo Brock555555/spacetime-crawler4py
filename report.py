@@ -22,7 +22,7 @@ class Report:
     longest_length = -1
     longest_page = str()
     combined_word_frequencies = defaultdict(int)
-    top_50_words = list(())
+    top_50_words = list()
 
     def __init__(self, url: str, soup: BeautifulSoup):
         self.report = dict()
@@ -32,7 +32,9 @@ class Report:
 
     def report_page_url(self, url: str):
         # urllib.parse.urldefrag should work
-        self.report["url"] = parse.urldefrag(url)
+        url, frag = parse.urldefrag(url)
+        url = url.lower().rstrip('/')
+        self.report["url"] = url
 
     def report_page_length(self, words: list[str]):
         self.report["page length"] = len(words)
@@ -56,11 +58,9 @@ class Report:
     def report_word_frequencies(self, words: list[str]):
         frequencies = defaultdict(int)
         for word in words:
-            frequencies[word] += 1
-        # Don't report stop words
-        for word in frequencies:
-            if word in STOP_WORDS:
-                frequencies.pop(word)
+            # Don't report stop words
+            if word not in STOP_WORDS:
+                frequencies[word] += 1
         self.report["word frequencies"] = frequencies
 
     def run(self):
@@ -92,7 +92,9 @@ class Report:
                              reverse = True)[:50]
         # count the pages in each subdomain
         for page in Report.unique_pages:
-            Report.subdomain_page_count[parse.urlparse(page).hostname] += 1
+            host = parse.urlparse(page).hostname
+            if host:
+                Report.subdomain_page_count[host] += 1
         # sort them alphabetically into a new dict
         Report.subdomain_page_count = dict(sorted(Report.subdomain_page_count.items()))
 
@@ -109,7 +111,7 @@ class Report:
             print(*Report.top_50_words[40:50], sep=", ", file = out_file)
             out_file.write(f"Number of subdomains: {len(Report.subdomain_page_count)}\n")
             out_file.write("Subdomain page count:\n")
-            for subdomain, page_count in Report.subdomain_page_count:
+            for subdomain, page_count in Report.subdomain_page_count.items():
                 out_file.write(f"{subdomain}\t{page_count}\n")
 
 STOP_WORDS = set("""
