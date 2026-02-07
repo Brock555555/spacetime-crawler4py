@@ -24,7 +24,7 @@ from report import Report
 # 1. Implement exact and near webpage similarity detection
 # 2. Make the crawler multithreaded.
 
-unique_urls = set() # TODO: still need to do
+unique_urls = set() # can still include for now? this currently prevents us from running duplicate urls
 error_urls = set() #will never add a url of this set again # TODO: Move this into worker (to make it persistent) and make sure worker doesn't use the error URLS as well (those that returned error status)
 
 def scraper(url, resp, blacklist, whitelist, site_map):
