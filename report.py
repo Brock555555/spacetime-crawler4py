@@ -103,6 +103,7 @@ class Report:
         with open(file_name, 'w') as out_file:
             out_file.write(f"Number of unique pages found: {len(Report.unique_pages)}\n")
             out_file.write(f"Longest page in terms of word count: {Report.longest_page}\n")
+            out_file.write(f"Word count: {Report.longest_length}\n")
             out_file.write("50 most common words (ignoring stop words):\n")
             print(*Report.top_50_words[0:10], sep=", ", file = out_file)
             print(*Report.top_50_words[10:20], sep=", ", file = out_file)
