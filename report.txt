@@ -1,0 +1,78 @@
+Number of unique pages found: 6344
+Longest page in terms of word count: http://www.ics.uci.edu/~shantas/publications/19-obscure_secret-sharing_shantanu-sharma_vldb.ppsx
+Word count: 435096
+50 most common words (ignoring stop words):
+research, student, ics, graduate, computer, undergraduate, students, science, uci, software
+informatics, news, learning, us, engineering, data, may, faculty, information, september
+july, june, department, ph, august, march, projects, alumni, april, january
+february, november, december, people, october, community, irvine, spotlights, will, events
+courses, uc, design, contact, books, support, profiles, computing, future, search
+Number of subdomains: 67
+Subdomain page count:
+acoi.ics.uci.edu	151
+aiclub.ics.uci.edu	1
+archive-beta.ics.uci.edu	11
+archive.ics.uci.edu	15
+asterix.ics.uci.edu	3
+betapro.proteomics.ics.uci.edu	1
+bit.ics.uci.edu	1
+cdb.ics.uci.edu	4
+cert.ics.uci.edu	2
+chenli.ics.uci.edu	17
+cml.ics.uci.edu	194
+code.ics.uci.edu	21
+create.ics.uci.edu	23
+cs.ics.uci.edu	12
+cs.uci.edu	1
+cybert.ics.uci.edu	26
+dgillen.ics.uci.edu	39
+ds4all.ics.uci.edu	7
+edgelab.ics.uci.edu	17
+emj.ics.uci.edu	46
+evoke.ics.uci.edu	2
+fr.ics.uci.edu	3
+hack.ics.uci.edu	2
+hai.ics.uci.edu	1
+hobbes.ics.uci.edu	1
+hpi.ics.uci.edu	16
+ics.uci.edu	1602
+insite.ics.uci.edu	8
+ipubmed.ics.uci.edu	3
+isg.ics.uci.edu	260
+jgarcia.ics.uci.edu	40
+luci.ics.uci.edu	21
+mailman.ics.uci.edu	36
+malek.ics.uci.edu	1
+mcs.ics.uci.edu	12
+mdogucu.ics.uci.edu	1
+mds.ics.uci.edu	7
+mhcid.ics.uci.edu	20
+mswe.ics.uci.edu	11
+mupro.proteomics.ics.uci.edu	1
+nalini.ics.uci.edu	13
+ngs.ics.uci.edu	1138
+oai.ics.uci.edu	5
+pepito.proteomics.ics.uci.edu	1
+plrg.ics.uci.edu	93
+psearch.ics.uci.edu	1
+radicle.ics.uci.edu	1
+riscit.ics.uci.edu	1
+scratch.proteomics.ics.uci.edu	1
+seal.ics.uci.edu	3
+stairs.ics.uci.edu	1
+stat.ics.uci.edu	39
+stat.uci.edu	2
+statistics-stage.ics.uci.edu	10
+student-council.ics.uci.edu	6
+tad.ics.uci.edu	3
+tastier.ics.uci.edu	1
+unite.ics.uci.edu	20
+vision.ics.uci.edu	5
+wics.ics.uci.edu	540
+www-db.ics.uci.edu	2
+www.cs.uci.edu	5
+www.ics.uci.edu	511
+www.informatics.ics.uci.edu	1
+www.informatics.uci.edu	1087
+www.stat.uci.edu	213
+xtune.ics.uci.edu	1
