@@ -25,6 +25,11 @@ class Worker(Thread):
         super().__init__(daemon=True)
     
     def robots(self, resp):
+        """
+        Given a response from download that refers to the downloading of the robots.txt
+        from the current url, parse and build the cache to store robots.txt information
+        and return it for scraper to add links or forbid links from it.
+        """
         self.logger.info(
             f"Downloaded {resp.url}, status <{resp.status}>, "
             f"using cache {self.config.cache_server}."
@@ -38,25 +43,29 @@ class Worker(Thread):
         with Worker.robots_lock:
             if domain in Worker.robots_cache:
                 info = Worker.robots_cache[domain]
-                # Return empty sitemap on subsequent calls
+                # Return empty sitemap on subsequent calls to prevent adding infinite links
                 return (info["allowed"], info["blacklist"], info["whitelist"], set())
 
-        if resp.status == 200 and resp.raw_response:
+        if resp.status == 200 and resp.raw_response: #url was successfully downloaded
+            #establish robots.txt sets
             blacklisted = set()
             whitelisted = set()
             Site_map_links = set()
+            #flags to denote when to start and stop reading certain lines
             start_blacklist = False
             start_whitelist = False
-            Precedence = False
+            Precedence = False #precedence rule if our specifially named bot shows up in the rules
             try:
-                text = resp.raw_response.content.decode("utf-8", errors="ignore")
-                for line in text.splitlines():
+                text = resp.raw_response.content.decode("utf-8", errors="ignore") #the entire page has already been downloaded to memory so just decode it into a string/file
+                for line in text.splitlines():#one line at a time
+                    #add sitemap links provided in robots and filter out sitemaps that only contain image types
                     if line.startswith("Sitemap: "):
                         link = line[9:].strip().lower()
                         if any(x in link for x in ["image", "img", "media", "video", "photo"]):
                             continue
                         Site_map_links.add(link)
                         continue
+                    #Find either our named bot or the all bots rule to build the blacklist and whitelist
                     if line.startswith("User-agent: "):
                         start_list = False
                         agent = line[12:]
@@ -69,6 +78,7 @@ class Worker(Thread):
                             start_blacklist = True
                             start_whitelist = True
                             continue
+                    #only adds to the set if we have already seen a user-agent
                     if line.startswith("Disallow: ") and start_blacklist:
                         path = line[10:]
                         blacklisted.add(path)
@@ -77,19 +87,20 @@ class Worker(Thread):
                         path = line[7:]
                         whitelisted.add(path)
                         continue
+                    #restarts the rule checking if an empty line is detected
                     if not line:
                         start_blacklist = False
                         start_whitelist = False
-                if "/" in blacklisted:
+                if "/" in blacklisted: #essentially if we are disallowed from all directories we shouldnt be going into this link
                     result = False, blacklisted, whitelisted, Site_map_links
                 else:
-                    result = True, blacklisted, whitelisted, Site_map_links
+                    result = True, blacklisted, whitelisted, Site_map_links #we are allowed to go into this link
             except:
-                result = True, blacklisted, whitelisted, Site_map_links
+                result = True, blacklisted, whitelisted, Site_map_links #allowed to go into link but robots doesnt exist
         else:
-            result = True, set(), set(), set()
+            result = True, set(), set(), set() #allowed to go into link but robots doesnt exist
 
-        # store in cache
+        # store in cache, stores based on new subdomains - which could have a different robots
         with Worker.robots_lock:
             Worker.robots_cache[domain] = {
                 "allowed": result[0],
@@ -102,20 +113,20 @@ class Worker(Thread):
         downloaded_file = False
 
         with Worker.robots_lock:
-            need_download = domain not in Worker.seen_robots
+            need_download = domain not in Worker.seen_robots #checks to see if the domain has been seen before
 
         if need_download:
             robots_url = f"{domain}/robots.txt"
-            resp = download(robots_url, self.config, self.logger)
+            resp = download(robots_url, self.config, self.logger) #downloads robots.txt for parsing
             downloaded_file = True
 
-            self.robots(resp)
+            self.robots(resp) #calld robots to parse robots.txt
 
             with Worker.robots_lock:
-                Worker.seen_robots.add(domain)
+                Worker.seen_robots.add(domain) #weve seen this robots before, dont parse next time
 
         with Worker.robots_lock:
-            return Worker.robots_cache[domain], downloaded_file
+            return Worker.robots_cache[domain], downloaded_file #return the robots info and a flag for detection
 
     def run(self):
         while True:
@@ -139,7 +150,7 @@ class Worker(Thread):
 
             # Skip forbidden URLs
             with error_lock:
-                if tbd_url in error_urls or tbd_url in unique_urls:
+                if tbd_url in error_urls or tbd_url in unique_urls: #disallow urls weve seen before that have been already crawled or error
                     self.logger.info(f"Skipping forbidden URL {tbd_url}")
                     with frontier_lock:
                         self.frontier.mark_url_complete(tbd_url)
@@ -164,7 +175,7 @@ class Worker(Thread):
                 Whitelisted = robots_info["whitelist"]
                 Site_map = robots_info["sitemap_links"]
 
-                if Allowed:
+                if Allowed: #if allowed to crawl lets download this link
                     resp = download(tbd_url, self.config, self.logger)
                     self.logger.info(
                         f"Downloaded {tbd_url}, status <{resp.status}>, "
@@ -179,7 +190,7 @@ class Worker(Thread):
                             self.frontier.condition.notify_all()
                         continue  # skip scraper, go to next URL
 
-                    scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map)
+                    scraped_urls = scraper.scraper(tbd_url, resp, Blacklisted, Whitelisted, Site_map) #call scraper with content parsed from robots
                     with frontier_lock:
                         for scraped_url in scraped_urls:
                             self.frontier.add_url(scraped_url)
@@ -191,4 +202,4 @@ class Worker(Thread):
                     self.frontier.active_workers -= 1
                     self.frontier.condition.notify_all()
 
-                time.sleep(self.config.time_delay) # TODO: Sleep regardless of whether bucket was empty?
+                time.sleep(self.config.time_delay)
